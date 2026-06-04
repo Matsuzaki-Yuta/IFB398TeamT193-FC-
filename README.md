@@ -93,7 +93,7 @@ Create a `.env` file in the project root:
 GEMINI_API_KEY=YOUR_API_KEY_HERE
 ```
 
-You can obtain a Gemini API key from Google AI Studio.
+You can obtain a Gemini API key from Google AI Studio. https://aistudio.google.com/app/api-keys?utm_source=chatgpt.com&project=gen-lang-client-0677881876 
 
 ---
 
