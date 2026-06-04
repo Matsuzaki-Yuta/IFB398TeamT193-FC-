@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Travel Video Matcher</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
+    h1 { color: #333; }
+    .upload-box { background: white; border: 2px dashed #aaa; border-radius: 8px; padding: 30px; text-align: center; }
+    input[type="file"] { margin: 10px 0; }
+    button { background: #0066cc; color: white; border: none; padding: 10px 24px; font-size: 16px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+    #status { margin: 20px 0; color: #555; font-style: italic; }
+    #analysis { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; display: none; }
+    #analysis h2 { margin-top: 0; }
+    #analysis pre { background: #f0f0f0; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+    .package-card { background: white; border-radius: 8px; padding: 20px; margin: 16px 0; border-left: 4px solid #0066cc; }
+    .package-card h3 { margin-top: 0; color: #0066cc; }
+    .package-card .price { font-size: 20px; font-weight: bold; color: #e60000; }
+    .package-card .meta { color: #666; font-size: 14px; margin: 6px 0; }
+    .package-card .reasons { background: #eef6ff; padding: 8px 12px; border-radius: 4px; font-size: 13px; margin-top: 10px; }
+    .package-card a { color: #0066cc; }
+    .tag { display: inline-block; background: #e0f0ff; color: #0066cc; border-radius: 12px; padding: 2px 10px; font-size: 12px; margin: 2px; }
+    #no-match { color: #888; font-style: italic; display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>🌍 Travel Video Matcher</h1>
+  <p>Upload a travel video and we'll find matching Flight Centre packages.</p>
+
+  <div class="upload-box">
+    <input type="file" id="videoInput" accept="video/*" />
+    <br/>
+    <button id="submitBtn" onclick="submitVideo()">Analyse & Match</button>
+  </div>
+
+  <div id="status"></div>
+
+  <!-- AI Analysis Result -->
+  <div id="analysis">
+    <h2>📊 Video Analysis</h2>
+    <pre id="analysisJson"></pre>
+  </div>
+
+  <!-- Matched Packages -->
+  <div id="results"></div>
+  <div id="no-match">No matching packages found for this video.</div>
+
+  <script>
+    async function submitVideo() {
+      const input = document.getElementById("videoInput");
+      const status = document.getElementById("status");
+      const btn = document.getElementById("submitBtn");
+
+      if (!input.files.length) {
+        alert("Please select a video file first.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("video", input.files[0]);
+
+      btn.disabled = true;
+      status.textContent = "⏳ Uploading and analysing video with Gemini AI...";
+      document.getElementById("analysis").style.display = "none";
+      document.getElementById("results").innerHTML = "";
+      document.getElementById("no-match").style.display = "none";
+
+      try {
+        const res = await fetch("/analyze", { method: "POST", body: formData });
+        const data = await res.json();
+
+        if (data.error) {
+          status.textContent = "❌ Error: " + data.error;
+          return;
+        }
+
+        status.textContent = "✅ Analysis complete!";
+
+        // Show raw AI analysis
+        document.getElementById("analysis").style.display = "block";
+        document.getElementById("analysisJson").textContent = JSON.stringify(data.video_analysis, null, 2);
+
+        // Show matched packages
+        const packages = data.matched_packages;
+        const resultsDiv = document.getElementById("results");
+
+        if (!packages.length) {
+          document.getElementById("no-match").style.display = "block";
+        } else {
+          resultsDiv.innerHTML = `<h2>🏖️ Matched Packages (${packages.length})</h2>`;
+          packages.forEach(pkg => {
+            resultsDiv.innerHTML += `
+              <div class="package-card">
+                ${pkg.image_url ? `<img src="${pkg.image_url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:6px;margin-bottom:12px;" onerror="this.style.display='none'"/>` : ""}
+                <h3>${pkg.name}</h3>
+                <div class="price">From A$${pkg.price_from_aud.toLocaleString()}</div>
+                <div class="meta">📍 ${pkg.destination} &nbsp;|&nbsp; 🌙 ${pkg.duration_nights} nights &nbsp;|&nbsp; 🏷️ ${pkg.category}</div>
+                <p style="font-size:14px;color:#444;">${pkg.summary}</p>
+                <div>${(pkg.vibe_tags || []).map(t => `<span class="tag">${t}</span>`).join("")}</div>
+                <div class="reasons">
+                  <strong>Why matched:</strong>
+                  ${(pkg.match_reasons || []).join(" · ")}
+                  ${pkg.match_score ? `&nbsp;(score: ${pkg.match_score})` : ""}
+                </div>
+                <br/><a href="${pkg.url}" target="_blank">View Package →</a>
+              </div>`;
+          });
+        }
+
+      } catch (err) {
+        status.textContent = "❌ Network error: " + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>

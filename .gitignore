@@ -1,0 +1,23 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.env/
+flightcenter/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+
+# Temporary uploads
+uploads/
+
+# Logs
+*.log
