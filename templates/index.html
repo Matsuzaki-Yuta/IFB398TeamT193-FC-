@@ -27,7 +27,7 @@
 </head>
 <body>
 
-  <h1>🌍 Travel Video Matcher</h1>
+  <h1>Travel Video Matcher</h1>
   <p>Upload a travel video and we'll find matching Flight Centre packages.</p>
 
   <div class="upload-box">
@@ -40,7 +40,7 @@
 
   <!-- AI Analysis Result -->
   <div id="analysis">
-    <h2>📊 Video Analysis</h2>
+    <h2>Video Analysis</h2>
     <pre id="analysisJson"></pre>
   </div>
 
@@ -63,7 +63,7 @@
       formData.append("video", input.files[0]);
 
       btn.disabled = true;
-      status.textContent = "⏳ Uploading and analysing video with Gemini AI...";
+      status.textContent = "Uploading and analysing video with Gemini AI...";
       document.getElementById("analysis").style.display = "none";
       document.getElementById("results").innerHTML = "";
       document.getElementById("no-match").style.display = "none";
@@ -73,11 +73,11 @@
         const data = await res.json();
 
         if (data.error) {
-          status.textContent = "❌ Error: " + data.error;
+          status.textContent = "Error: " + data.error;
           return;
         }
 
-        status.textContent = "✅ Analysis complete!";
+        status.textContent = "Analysis complete!";
 
         // Show raw AI analysis
         document.getElementById("analysis").style.display = "block";
@@ -90,14 +90,14 @@
         if (!packages.length) {
           document.getElementById("no-match").style.display = "block";
         } else {
-          resultsDiv.innerHTML = `<h2>🏖️ Matched Packages (${packages.length})</h2>`;
+          resultsDiv.innerHTML = `<h2>Matched Packages (${packages.length})</h2>`;
           packages.forEach(pkg => {
             resultsDiv.innerHTML += `
               <div class="package-card">
                 ${pkg.image_url ? `<img src="${pkg.image_url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:6px;margin-bottom:12px;" onerror="this.style.display='none'"/>` : ""}
                 <h3>${pkg.name}</h3>
                 <div class="price">From A$${pkg.price_from_aud.toLocaleString()}</div>
-                <div class="meta">📍 ${pkg.destination} &nbsp;|&nbsp; 🌙 ${pkg.duration_nights} nights &nbsp;|&nbsp; 🏷️ ${pkg.category}</div>
+                <div class="meta">${pkg.destination} &nbsp;|&nbsp; ${pkg.duration_nights} nights &nbsp;|&nbsp; ${pkg.category}</div>
                 <p style="font-size:14px;color:#444;">${pkg.summary}</p>
                 <div>${(pkg.vibe_tags || []).map(t => `<span class="tag">${t}</span>`).join("")}</div>
                 <div class="reasons">
@@ -111,7 +111,7 @@
         }
 
       } catch (err) {
-        status.textContent = "❌ Network error: " + err.message;
+        status.textContent = "Network error: " + err.message;
       } finally {
         btn.disabled = false;
       }
