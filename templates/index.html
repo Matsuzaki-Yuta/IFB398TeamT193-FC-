@@ -49,74 +49,228 @@
   <div id="no-match">No matching packages found for this video.</div>
 
   <script>
-    async function submitVideo() {
-      const input = document.getElementById("videoInput");
-      const status = document.getElementById("status");
-      const btn = document.getElementById("submitBtn");
+  async function submitVideo() {
+    const input = document.getElementById("videoInput");
+    const status = document.getElementById("status");
+    const btn = document.getElementById("submitBtn");
+    const analysisSection = document.getElementById("analysis");
+    const analysisJson = document.getElementById("analysisJson");
+    const resultsDiv = document.getElementById("results");
+    const noMatch = document.getElementById("no-match");
 
-      if (!input.files.length) {
-        alert("Please select a video file first.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("video", input.files[0]);
-
-      btn.disabled = true;
-      status.textContent = "Uploading and analysing video with Gemini AI...";
-      document.getElementById("analysis").style.display = "none";
-      document.getElementById("results").innerHTML = "";
-      document.getElementById("no-match").style.display = "none";
-
-      try {
-        const res = await fetch("/analyze", { method: "POST", body: formData });
-        const data = await res.json();
-
-        if (data.error) {
-          status.textContent = "Error: " + data.error;
-          return;
-        }
-
-        status.textContent = "Analysis complete!";
-
-        // Show raw AI analysis
-        document.getElementById("analysis").style.display = "block";
-        document.getElementById("analysisJson").textContent = JSON.stringify(data.video_analysis, null, 2);
-
-        // Show matched packages
-        const packages = data.matched_packages;
-        const resultsDiv = document.getElementById("results");
-
-        if (!packages.length) {
-          document.getElementById("no-match").style.display = "block";
-        } else {
-          resultsDiv.innerHTML = `<h2>Matched Packages (${packages.length})</h2>`;
-          packages.forEach(pkg => {
-            resultsDiv.innerHTML += `
-              <div class="package-card">
-                ${pkg.image_url ? `<img src="${pkg.image_url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:6px;margin-bottom:12px;" onerror="this.style.display='none'"/>` : ""}
-                <h3>${pkg.name}</h3>
-                <div class="price">From A$${pkg.price_from_aud.toLocaleString()}</div>
-                <div class="meta">${pkg.destination} &nbsp;|&nbsp; ${pkg.duration_nights} nights &nbsp;|&nbsp; ${pkg.category}</div>
-                <p style="font-size:14px;color:#444;">${pkg.summary}</p>
-                <div>${(pkg.vibe_tags || []).map(t => `<span class="tag">${t}</span>`).join("")}</div>
-                <div class="reasons">
-                  <strong>Why matched:</strong>
-                  ${(pkg.match_reasons || []).join(" · ")}
-                  ${pkg.match_score ? `&nbsp;(score: ${pkg.match_score})` : ""}
-                </div>
-                <br/><a href="${pkg.url}" target="_blank">View Package →</a>
-              </div>`;
-          });
-        }
-
-      } catch (err) {
-        status.textContent = "Network error: " + err.message;
-      } finally {
-        btn.disabled = false;
-      }
+    // Check that the user selected a video.
+    if (!input.files.length) {
+      alert("Please select a video file first.");
+      return;
     }
-  </script>
 
+    // Prepare the video for the /api/analyse endpoint.
+    const formData = new FormData();
+    formData.append("video", input.files[0]);
+
+    // Reset results from any previous analysis.
+    btn.disabled = true;
+    analysisSection.style.display = "none";
+    resultsDiv.innerHTML = "";
+    noMatch.style.display = "none";
+
+    try {
+      /*
+       * STEP 1: Send the video to Gemini.
+       *
+       * This endpoint only analyses the video.
+       * It does not search the package database.
+       */
+      status.textContent =
+        "Uploading and analysing video with Gemini AI...";
+
+      const analyseResponse = await fetch("/api/analyse", {
+        method: "POST",
+        body: formData
+      });
+
+      const analyseData = await analyseResponse.json();
+
+      // Handle the new structured backend error response.
+      if (!analyseResponse.ok || !analyseData.success) {
+        const message =
+          analyseData.error?.message ||
+          "The video could not be analysed.";
+
+        throw new Error(message);
+      }
+
+      const analysis = analyseData.analysis;
+
+      // Display the Gemini analysis.
+      analysisSection.style.display = "block";
+      analysisJson.textContent = JSON.stringify(
+        analysis,
+        null,
+        2
+      );
+
+      /*
+       * STEP 2: Send Gemini's analysis to the matching endpoint.
+       *
+       * This endpoint searches packages.db using the destinations
+       * and travel styles found by Gemini.
+       */
+      status.textContent =
+        "Analysis complete. Finding matching packages...";
+
+      const matchResponse = await fetch("/api/packages/match", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          analysis: analysis
+        })
+      });
+
+      const matchData = await matchResponse.json();
+
+      if (!matchResponse.ok || !matchData.success) {
+        const message =
+          matchData.error?.message ||
+          "Packages could not be matched.";
+
+        throw new Error(message);
+      }
+
+      // The new matching endpoint returns its results as "packages".
+      const packages = matchData.packages || [];
+
+      status.textContent =
+        `Analysis complete. ${matchData.total_matches} matching package(s) found.`;
+
+      displayPackages(packages);
+
+    } catch (error) {
+      status.textContent = "Error: " + error.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+
+  /*
+   * Displays the packages returned by /api/packages/match.
+   *
+   * Keeping this in a separate function makes the frontend easier
+   * to maintain and lets the redesigned results page reuse it.
+   */
+  function displayPackages(packages) {
+    const resultsDiv = document.getElementById("results");
+    const noMatch = document.getElementById("no-match");
+
+    resultsDiv.innerHTML = "";
+    noMatch.style.display = "none";
+
+    if (!packages.length) {
+      noMatch.style.display = "block";
+      return;
+    }
+
+    resultsDiv.innerHTML =
+      `<h2>Matched Packages (${packages.length})</h2>`;
+
+    packages.forEach(packageData => {
+      /*
+       * Some database fields may be missing.
+       * These fallback values prevent the page from crashing.
+       */
+      const price =
+        packageData.price_from_aud != null
+          ? `From A$${Number(
+              packageData.price_from_aud
+            ).toLocaleString()}`
+          : "Price unavailable";
+
+      const duration =
+        packageData.duration_nights != null
+          ? `${packageData.duration_nights} nights`
+          : "Duration unavailable";
+
+      const image = packageData.image_url
+        ? `
+          <img
+            src="${packageData.image_url}"
+            alt="${packageData.name || "Travel package"}"
+            style="
+              width: 100%;
+              max-height: 200px;
+              object-fit: cover;
+              border-radius: 6px;
+              margin-bottom: 12px;
+            "
+            onerror="this.style.display='none'"
+          />
+        `
+        : "";
+
+      const tags = (packageData.vibe_tags || [])
+        .map(tag => `<span class="tag">${tag}</span>`)
+        .join("");
+
+      const reasons = (packageData.match_reasons || [])
+        .join(" · ");
+
+      const score =
+        packageData.match_score != null
+          ? ` (score: ${packageData.match_score})`
+          : "";
+
+      const packageLink = packageData.url
+        ? `
+          <br />
+          <a
+            href="${packageData.url}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View Package →
+          </a>
+        `
+        : "";
+
+      resultsDiv.insertAdjacentHTML(
+        "beforeend",
+        `
+          <div class="package-card">
+            ${image}
+
+            <h3>${packageData.name || "Unnamed package"}</h3>
+
+            <div class="price">${price}</div>
+
+            <div class="meta">
+              ${packageData.destination || "Destination unavailable"}
+              &nbsp;|&nbsp;
+              ${duration}
+              &nbsp;|&nbsp;
+              ${packageData.category || "Package"}
+            </div>
+
+            <p style="font-size:14px;color:#444;">
+              ${packageData.summary || "No summary available."}
+            </p>
+
+            <div>${tags}</div>
+
+            <div class="reasons">
+              <strong>Why matched:</strong>
+              ${reasons || "Matching details unavailable."}
+              ${score}
+            </div>
+
+            ${packageLink}
+          </div>
+        `
+      );
+    });
+  }
+</script>
 </body>
 </html>
