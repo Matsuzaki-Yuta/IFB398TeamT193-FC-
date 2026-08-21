@@ -1,0 +1,28 @@
+<!-- Reusable across every page in the booking flow: pass process_steps (list of
+     {id, number, label, url}) and process_current (the active step's id).
+     A step before the current one is "done" and links back; the current step
+     is marked and not a link; steps with url=None have no page yet, so they
+     render inert regardless of position. -->
+<nav class="process-nav" aria-label="Booking process">
+  {% for step in process_steps %}
+    {% set is_current = step.id == process_current %}
+    {% set is_done = loop.index0 < process_current_index %}
+    {% if is_current %}
+      <span class="process-step is-current" data-step-id="{{ step.id }}" aria-current="step">
+        <span class="process-circle">{{ step.number }}</span>
+        <span class="process-label">{{ step.label }}</span>
+      </span>
+    {% elif step.url and is_done %}
+      <a class="process-step is-done" data-step-id="{{ step.id }}" href="{{ step.url }}">
+        <span class="process-circle">{{ step.number }}</span>
+        <span class="process-label">{{ step.label }}</span>
+      </a>
+    {% else %}
+      <span class="process-step is-upcoming" data-step-id="{{ step.id }}">
+        <span class="process-circle">{{ step.number }}</span>
+        <span class="process-label">{{ step.label }}</span>
+      </span>
+    {% endif %}
+    {% if not loop.last %}<span class="process-line" aria-hidden="true"></span>{% endif %}
+  {% endfor %}
+</nav>

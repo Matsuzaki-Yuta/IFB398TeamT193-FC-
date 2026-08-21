@@ -1,0 +1,103 @@
+/* Shared shell for every page in the booking flow (customer, upload, analysis…):
+   page header, elevated form card, section heads, fields and action row. */
+
+.page-wrap { max-width: 680px; width: 100%; margin: 0 auto; padding: 48px 20px 64px; box-sizing: border-box; }
+.page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+
+/* ---- form card: soft elevation + a thin gradient seam instead of a flat border ---- */
+.form-card {
+  position: relative;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 34px 34px 30px;
+  box-shadow: 0 24px 48px -20px rgba(16,20,26,.18), 0 2px 8px rgba(16,20,26,.04);
+}
+.form-card::before {
+  content: ""; position: absolute; left: 22px; right: 22px; top: 0; height: 3px; border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, var(--fc-red), var(--accent) 65%, #1AA260);
+  opacity: .85;
+}
+
+.field-group { display: flex; flex-direction: column; gap: 26px; }
+
+.section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.section-badge {
+  width: 24px; height: 24px; flex: none; border-radius: 50%;
+  background: var(--bg-sunk); border: 1px solid var(--line-strong);
+  display: flex; align-items: center; justify-content: center; color: var(--text-dim);
+}
+.section-badge svg { width: 13px; height: 13px; }
+.section-label { font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field label { font-size: 13px; font-weight: 650; color: var(--text); }
+.field .hint { font-size: 12px; color: var(--text-dim); margin-top: -2px; }
+
+/* ---- required fields ---- */
+/* The asterisk is decoration: it is aria-hidden in the markup, and the input's
+   own required attribute is what a screen reader announces. */
+.req { color: var(--fc-red); font-weight: 700; margin-left: 3px; }
+
+/* for groups with no native input to validate, e.g. the age-range chips */
+.field-error { font-size: 12px; font-weight: 600; color: var(--fc-red); }
+[aria-invalid="true"] .chip { border-color: var(--fc-red); }
+
+.input-wrap { position: relative; }
+.input-wrap .icon {
+  position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: var(--text-dim); pointer-events: none;
+}
+.field input, .field select {
+  width: 100%; font: inherit; font-size: 14.5px; color: var(--text);
+  padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--bg-sunk); box-shadow: inset 0 1px 2px rgba(16,20,26,.03);
+  transition: border-color .22s var(--ease), background .22s var(--ease), box-shadow .22s var(--ease);
+}
+.input-wrap input { padding-left: 38px; }
+.field input:focus, .field select:focus {
+  border-color: var(--accent); background: var(--bg-elev); outline: none;
+  box-shadow: 0 0 0 4px rgba(0,113,227,.12);
+}
+.field input::placeholder { color: var(--text-dim); opacity: .7; }
+
+/* A class, not :invalid — a required field must only turn red once a submit
+   has actually been attempted, otherwise a fresh form is a wall of red before
+   the user has typed anything. The page script adds .is-invalid on the browser's
+   own invalid event and drops it again once the field is filled in.
+
+   These sit after the :focus rules on purpose: a failed submit focuses the
+   first bad field, and it should read red there, not blue. */
+.field input.is-invalid,
+.field input.is-invalid:focus { border-color: var(--fc-red); background: var(--bg-elev); }
+.field input.is-invalid:focus { box-shadow: 0 0 0 4px rgba(213,1,24,.12); }
+
+/* ---- a number field with a unit sitting inside it (A$ …, … %, … days) ---- */
+/* The left padding is keyed off an actual .prefix sibling, so a suffix-only
+   field is not left with a hole where no symbol is drawn. */
+.money-field { position: relative; }
+.money-field span.prefix {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 14.5px; color: var(--text-dim); font-weight: 700; pointer-events: none;
+}
+.money-field input { padding-right: 58px; }
+.money-field .prefix ~ input { padding-left: 36px; }
+.field-suffix {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--text-dim); pointer-events: none;
+}
+
+.divider { height: 1px; background: var(--line); margin: 2px 0 0; }
+
+.form-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 32px; }
+.btn-back { color: var(--text-dim); font-size: 14px; font-weight: 600; text-decoration: none; padding: 10px 4px; transition: color .2s var(--ease); }
+.btn-back:hover { color: var(--text); }
+
+.glass-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+@media (max-width: 560px) {
+  .field-row { grid-template-columns: 1fr; }
+  .form-card { padding: 24px 20px; }
+  .page-head { flex-direction: column; }
+}

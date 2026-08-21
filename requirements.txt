@@ -1,4 +1,11 @@
 # Requirements
+
+# SETUP — run these in a terminal opened in the project folder:
+# 1) Create the virtual environment
+#    python -m venv .venv
+# 2) Install the dependencies
+#    .venv\Scripts\python.exe -m pip install -r requirements.txt
+
 flask
 google-genai
 python-dotenv

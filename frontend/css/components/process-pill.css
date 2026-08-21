@@ -1,0 +1,13 @@
+/* Progress pill — shared by every step that shows one (see
+   components/_progress_pill.html). Lived in customer.css while the customer
+   page was the only page with it. */
+
+.progress-pill {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  background: var(--bg-elev); border: 1px solid var(--line);
+  border-radius: 999px; padding: 7px 14px 7px 7px;
+  box-shadow: 0 4px 14px rgba(16,20,26,.06);
+}
+.progress-ring { width: 26px; height: 26px; flex: none; }
+.progress-pill .n { font-size: 12.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.progress-pill .n span { color: var(--text-dim); font-weight: 600; }

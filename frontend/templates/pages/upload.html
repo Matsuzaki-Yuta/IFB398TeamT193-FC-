@@ -1,0 +1,110 @@
+{% extends "layouts/base.html" %}
+{% block title %}Trip Bridge: upload a video{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="/static/css/components/flow.css" />
+  <link rel="stylesheet" href="/static/css/pages/upload.css" />
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap page-wrap--wide">
+  <div class="page-head">
+    <div>
+      <h1 class="headline">Show us the trip</h1>
+      <p class="lede" style="margin:10px 0 0;">Upload a travel video from this device, or scan the code to send a link straight from your phone. Either way we read the place, pace and mood.</p>
+    </div>
+    {% include "components/_progress_pill.html" %}
+  </div>
+
+  <div class="form-card">
+    <div class="choice-grid">
+
+      <!-- ---------- option A: upload from this device ---------- -->
+      <section class="choice">
+        <div class="section-head">
+          <span class="section-badge">
+            <!-- film strip: outer frame, two vertical rails, four sprocket holes -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <line x1="7" y1="4" x2="7" y2="20" />
+              <line x1="17" y1="4" x2="17" y2="20" />
+              <line x1="2" y1="9" x2="7" y2="9" />
+              <line x1="2" y1="15" x2="7" y2="15" />
+              <line x1="17" y1="9" x2="22" y2="9" />
+              <line x1="17" y1="15" x2="22" y2="15" />
+            </svg>
+          </span>
+          <span class="section-label">Travel video</span>
+        </div>
+
+        <div class="upload-box">
+          <!-- arrow rising out of a tray -->
+          <svg class="upload-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="16" x2="12" y2="4" />
+            <polyline points="8,8 12,4 16,8" />
+            <path d="M4 16 V19 A2 2 0 0 0 6 21 H18 A2 2 0 0 0 20 19 V16" />
+          </svg>
+          <label class="file-prompt" for="videoInput">Choose a travel video</label>
+          <input type="file" id="videoInput" accept="video/*" />
+          <span class="fineprint">MP4, MOV or WebM</span>
+        </div>
+      </section>
+
+      <div class="or-rail" aria-hidden="true">
+        <span class="rail"></span>
+        <span class="or">OR</span>
+        <span class="rail"></span>
+      </div>
+
+      <!-- ---------- option B: scan to send a link ---------- -->
+      <section class="choice">
+        <div class="section-head">
+          <span class="section-badge">
+            <!-- QR glyph: three finder squares plus a few data marks -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="3" height="3" />
+              <line x1="20" y1="14" x2="20" y2="17" />
+              <line x1="14" y1="20" x2="17" y2="20" />
+              <line x1="20" y1="20" x2="21" y2="20" />
+            </svg>
+          </span>
+          <span class="section-label">Scan to send a link</span>
+        </div>
+
+        <div class="qr-stage">
+          <div class="qr-frame">
+            <i></i><i></i><i></i><i></i>
+            <div class="qr-tile">
+              <svg id="qrSvg" viewBox="0 0 25 25" shape-rendering="geometricPrecision" role="img" aria-label="Pairing QR code"></svg>
+            </div>
+          </div>
+          <div>
+            <div class="qr-caption">Scan with your phone camera</div>
+            <p class="qr-help">Then share any Instagram, TikTok or YouTube travel link &mdash; it lands here automatically.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="paste-row">
+      <label for="pasteLink">Or paste a link</label>
+      <input type="url" id="pasteLink" placeholder="https://instagram.com/reel/&hellip;" />
+    </div>
+
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <div class="form-actions">
+      <a class="btn-back" href="/customer">&larr; Back to Customer</a>
+      <button type="button" class="glass-button glass-button--dark" id="submitBtn" onclick="submitVideo()">Analyse &amp; Match &rarr;</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/components/qr-code.js"></script>
+  <script src="/static/js/pages/upload.js"></script>
+{% endblock %}

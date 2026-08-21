@@ -1,0 +1,190 @@
+/* ---- final quote: the chosen package and its terms on the left, the total
+   building on the right. The shared page shell (form-card, fields, actions)
+   comes from components/flow.css; everything below is specific to this step. ---- */
+
+.quote-wrap { max-width: 1180px; width: 100%; margin: 0 auto; padding: 48px 24px 72px; box-sizing: border-box; }
+
+/* The rail is a fixed 360px so the numbers never reflow as the total changes;
+   the picker takes whatever is left. */
+.quote-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.quote-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+/* the three cards on the left carry their own head row, so the seam that
+   flow.css paints across the top of a form-card would double up */
+.quote-main .form-card { padding: 26px 26px 24px; }
+.quote-main .form-card::before { display: none; }
+
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+.card-note { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+.card-note--link { text-decoration: none; border-bottom: 1px solid var(--line-strong); }
+.card-note--link:hover { color: var(--text); }
+
+/* ---- 1. the package carried over from the Build Package step ---- */
+/* Read-only here: the choice is made on /packages, so this is a confirmation
+   of what is being quoted, not another control. */
+.chosen[hidden] { display: none; }
+.chosen {
+  display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 16px; align-items: center;
+  padding: 14px 16px; border-radius: 16px;
+  border: 1.5px solid var(--fc-red); background: var(--bg-elev);
+  box-shadow: 0 0 0 3px rgba(213,1,24,.08);
+}
+.chosen-thumb {
+  width: 84px; height: 64px; border-radius: 11px; display: block; flex: none;
+  background: var(--bg-sunk) center / cover no-repeat;
+}
+/* the block is built from spans, so each part has to be told to behave as one —
+   inline spans would run the name and meta together */
+.chosen-body { display: block; min-width: 0; }
+.chosen-name {
+  display: block; font-size: 16.5px; font-weight: 700; letter-spacing: -.02em; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.chosen-meta { display: block; font-size: 12.5px; color: var(--text-dim); margin-top: 3px; }
+.chosen-price { text-align: right; flex: none; }
+.chosen-price b { display: block; font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+.chosen-price span { display: block; font-size: 11px; color: var(--text-dim); }
+
+.pick-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.pick-tag {
+  font-size: 10.5px; font-weight: 650; letter-spacing: .03em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--bg-sunk); color: var(--text-dim); border: 1px solid var(--line);
+}
+.pick-tag--match { background: rgba(213,1,24,.07); border-color: rgba(213,1,24,.22); color: var(--fc-red); }
+
+/* ---- empty state ---- */
+.empty-state { text-align: center; padding: 26px 10px 12px; color: var(--text-dim); }
+.empty-state svg { width: 30px; height: 30px; opacity: .5; }
+.empty-state p { font-size: 14px; margin: 12px 0 16px; }
+.empty-state .btn-back { display: inline-block; }
+.link-btn {
+  display: block; margin: 8px auto 0; font: inherit; font-size: 12.5px; font-weight: 600;
+  color: var(--accent); background: none; border: 0; cursor: pointer; padding: 4px;
+}
+.link-btn:hover { text-decoration: underline; }
+
+/* ---- 3. fields this page only displays ---- */
+/* Sunk a shade further than an editable field and with no focus ring, so the
+   difference reads before anyone tries to type in one. */
+/* a shade darker than --bg-sunk, which the editable fields already use */
+.field input[readonly] {
+  background: rgba(16,20,26,.075); color: var(--text-dim); cursor: default;
+  border-color: transparent; box-shadow: none;
+}
+.field input[readonly]:focus {
+  background: rgba(16,20,26,.075); border-color: var(--line-strong); box-shadow: none;
+}
+.input-wrap:has(input[readonly]) .icon { opacity: .6; }
+.locked-note { font-size: 12px; color: var(--text-dim); margin: 9px 0 0; }
+.locked-note a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.locked-note a:hover { text-decoration: underline; }
+
+/* ---- the message field ---- */
+.field textarea {
+  width: 100%; font: inherit; font-size: 14.5px; color: var(--text); resize: vertical;
+  padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--bg-sunk); box-shadow: inset 0 1px 2px rgba(16,20,26,.03);
+  transition: border-color .22s var(--ease), background .22s var(--ease), box-shadow .22s var(--ease);
+}
+.field textarea:focus { border-color: var(--accent); background: var(--bg-elev); outline: none; box-shadow: 0 0 0 4px rgba(0,113,227,.12); }
+.field textarea::placeholder { color: var(--text-dim); opacity: .7; }
+
+/* ---- the summary rail ---- */
+.quote-rail { position: sticky; top: 22px; }
+.summary-card {
+  position: relative; overflow: hidden;
+  background: var(--bg-elev); border: 1px solid var(--line); border-radius: 22px;
+  padding: 26px 24px 22px;
+  box-shadow: 0 28px 56px -24px rgba(16,20,26,.24), 0 2px 8px rgba(16,20,26,.04);
+}
+.summary-card::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 3px;
+  background: linear-gradient(90deg, var(--fc-red), var(--accent) 65%, #1AA260);
+}
+
+.summary-name { font-size: 19px; font-weight: 700; letter-spacing: -.025em; line-height: 1.25; margin: 0; }
+.summary-meta { font-size: 12.5px; color: var(--text-dim); margin: 6px 0 0; }
+
+.summary-lines { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 9px; }
+/* as with the veil below, display:flex would beat the hidden attribute */
+.line[hidden] { display: none; }
+.line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 13.5px; color: var(--text-dim); }
+.line b { font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
+.line--credit b { color: #12805A; }
+
+.summary-total {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+  font-size: 14px; font-weight: 650; color: var(--text-dim);
+}
+.summary-total b { font-size: 27px; font-weight: 700; letter-spacing: -.03em; color: var(--text); font-variant-numeric: tabular-nums; }
+.summary-deposit {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-top: 6px; font-size: 12px; color: var(--text-dim);
+}
+.summary-deposit b { font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.send-btn { width: 100%; margin-top: 20px; }
+.send-btn svg { width: 17px; height: 17px; }
+.summary-fineprint { font-size: 11px; line-height: 1.45; color: var(--text-dim); margin: 16px 0 0; }
+
+/* ---- sent confirmation ---- */
+/* display:flex would otherwise beat the hidden attribute the script toggles */
+.sent-veil[hidden] { display: none; }
+.sent-veil {
+  position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(10,12,18,.44);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  animation: veil-in .3s var(--ease) both;
+}
+.sent-card {
+  width: min(430px, 100%); text-align: center;
+  background: var(--bg-elev); border: 1px solid var(--line); border-radius: 24px;
+  padding: 34px 30px 28px; box-shadow: 0 40px 80px -30px rgba(10,12,18,.55);
+  animation: card-in .45s var(--ease-out) both;
+}
+.sent-tick {
+  width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; background: linear-gradient(160deg, #24B47E, #12805A);
+  box-shadow: 0 12px 26px -12px rgba(18,128,90,.8);
+}
+.sent-tick svg { width: 26px; height: 26px; }
+.sent-card h2 { font-size: 23px; font-weight: 700; letter-spacing: -.03em; margin: 0; }
+.sent-sub { font-size: 14px; color: var(--text-dim); margin: 8px 0 0; }
+
+.sent-facts { margin: 22px 0 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg-sunk); overflow: hidden; }
+.sent-facts div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 15px; font-size: 13px; color: var(--text-dim); }
+.sent-facts div + div { border-top: 1px solid var(--line); }
+.sent-facts b { color: var(--text); font-weight: 650; text-align: right; }
+
+.sent-actions .glass-button { width: 100%; }
+
+@keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes card-in { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* ---- print / save-as-PDF: keep the chosen package and the numbers, drop the
+   navigation and every control that cannot be clicked on paper ---- */
+@media print {
+  .topbar, .process-nav, .progress-pill, .form-actions,
+  .send-btn, .card-note, .link-btn, .sent-veil { display: none !important; }
+
+  .quote-wrap { padding: 0; max-width: none; }
+  .quote-layout { grid-template-columns: 1fr; gap: 16px; }
+  .quote-rail { position: static; }
+  .form-card, .summary-card, .chosen { box-shadow: none; break-inside: avoid; }
+}
+
+/* ---- narrow: the rail drops under the picker and stops sticking ---- */
+@media (max-width: 940px) {
+  .quote-layout { grid-template-columns: minmax(0, 1fr); }
+  .quote-rail { position: static; }
+}
+@media (max-width: 560px) {
+  .quote-wrap { padding: 32px 16px 56px; }
+  .chosen { grid-template-columns: 60px minmax(0, 1fr); gap: 12px; }
+  .chosen-thumb { width: 60px; height: 60px; }
+  /* the price moves under the text rather than squeezing the name */
+  .chosen-price { grid-column: 2; text-align: left; }
+}

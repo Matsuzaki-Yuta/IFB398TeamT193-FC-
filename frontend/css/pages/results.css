@@ -1,0 +1,77 @@
+/* ---- results page: matched packages (wide, not centred as a single column) ---- */
+.results-wrap { max-width: 1400px; width: 100%; margin: 0 auto; padding: 48px 24px 64px; box-sizing: border-box; }
+.results-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+.results-head .lede { max-width: 60ch; }
+
+.btn-back { flex: none; color: var(--text-dim); font-size: 14px; font-weight: 600; text-decoration: none; padding: 10px 4px; transition: color .2s var(--ease); }
+.btn-back:hover { color: var(--text); }
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+/* ---- package cards ---- */
+/* .lift from theme.css supplies the soft multi-hue hover light */
+/* Each card is the choice for this step, so the whole thing is clickable and
+   the chosen one carries the brand ring. */
+.package-card {
+  background: var(--bg-elev); border: 1.5px solid var(--line);
+  border-radius: 18px; padding: 22px; margin: 0; cursor: pointer;
+}
+.package-card.is-selected {
+  border-color: var(--fc-red);
+  box-shadow: 0 0 0 3px rgba(213,1,24,.10), 0 16px 34px -22px rgba(213,1,24,.6);
+}
+
+.card-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+}
+.choose-mark { display: flex; align-items: center; gap: 9px; min-width: 0; }
+/* an empty ring before the choice, the brand red with a tick after it */
+.choose-mark svg {
+  width: 20px; height: 20px; flex: none; padding: 4px; border-radius: 50%; color: transparent;
+  border: 1.5px solid var(--line-strong); background: var(--bg-elev);
+  transition: background .25s var(--ease), border-color .25s var(--ease), color .25s var(--ease);
+}
+.is-selected .choose-mark svg { color: #fff; background: var(--fc-red); border-color: var(--fc-red); }
+.choose-label { font-size: 13px; font-weight: 650; color: var(--text-dim); }
+.is-selected .choose-label { color: var(--fc-red); }
+.card-foot a { font-size: 13px; white-space: nowrap; }
+
+.choose-hint { font-size: 13px; color: var(--text-dim); }
+.choose-hint[hidden] { display: none !important; }
+/* aria-disabled, not the disabled attribute: the CTA is an anchor */
+.glass-button.is-locked { opacity: .45; cursor: not-allowed; transform: none; }
+.package-card h3 { margin-top: 0; letter-spacing: -.02em; color: var(--text); }
+.package-card a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.package-card a:hover { text-decoration: underline; }
+.package-card img { display: block; width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 12px; background: var(--bg-sunk); }
+.package-card .summary { font-size: 14px; color: var(--text-dim); }
+.price { font-size: 22px; font-weight: 700; letter-spacing: -.02em; color: var(--text); }
+.meta { color: var(--text-dim); font-size: 14px; margin: 6px 0; }
+.reasons {
+  background: var(--bg-sunk); color: var(--text-dim);
+  padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-top: 10px;
+}
+.reasons strong { color: var(--text); }
+.tag {
+  display: inline-block; border-radius: 999px; padding: 3px 12px;
+  font-size: 12px; font-weight: 500; margin: 2px;
+  background: var(--bg-sunk); color: var(--text-dim);
+  border: 1px solid var(--line);
+}
+#no-match { color: var(--text-dim); font-style: italic; }
+
+/* forward to the quote step (flow.css is not loaded here, so this row is local) */
+/* flex-end plus an auto margin on the hint, so the CTA stays right-aligned once
+   a package is chosen and the hint disappears */
+.form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 34px; }
+.choose-hint { margin-right: auto; }
+
+@media (max-width: 640px) {
+  .results-head { flex-direction: column; }
+}
