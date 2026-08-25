@@ -1,0 +1,229 @@
+{% extends "layouts/base.html" %}
+{% block title %}Trip Bridge: landing page{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="/static/css/pages/landing.css" />
+{% endblock %}
+
+{% block content %}
+<!-- --------------------------------- HERO --------------------------------- -->
+<section class="hero" id="hero">
+  <video class="video" id="video" autoplay muted playsinline hidden></video>
+  <div class="shade"></div>
+
+  <div class="hero-copy">
+    <p class="eyebrow">Trip Bridge</p>
+    <h1 class="display">The trip you<br /><span class="shimmer-text">just watched.</span></h1>
+    <p class="lede">
+      Upload any travel video. We read the place, pace and mood, then match it to a real Flight Centre package.
+    </p>
+    <div class="actions">
+      <a class="glass-button glass-button--light" data-glass="light" href="/customer">Try it now &rarr;</a>
+      <a class="glass-button glass-button--dark" data-glass="dark" href="#how">See how it works</a>
+    </div>
+  </div>
+
+  <div class="scroll-cue">Scroll</div>
+  <div class="volume" id="volume" hidden>
+    <button class="sound" id="sound" type="button" aria-label="Unmute video">&#128263;</button>
+    <input id="volumeSlider" type="range" min="0" max="100" value="50" aria-label="Video volume" />
+  </div>
+</section>
+
+<!-- ----------------------------- HOW IT WORKS ------------------------------ -->
+<section class="section dark fade-b" id="how">
+  <div class="aurora"><i></i><i></i><i></i></div>
+  <div class="shell layer">
+    <div class="heading center reveal">
+      <p class="eyebrow">How it works</p>
+      <h2 class="headline">Three steps.<br />About a minute.</h2>
+    </div>
+
+    <div class="grid">
+      <article class="card dark-card lift-dark reveal">
+        <div class="num">01</div>
+        <h3>Upload</h3>
+        <p class="copy">Choose a reel, vlog or travel clip from your camera roll.</p>
+      </article>
+      <article class="card dark-card lift-dark reveal">
+        <div class="num">02</div>
+        <h3>Understand</h3>
+        <p class="copy">Gemini reads the destination, landmarks, activities and travel style.</p>
+      </article>
+      <article class="card dark-card lift-dark reveal">
+        <div class="num">03</div>
+        <h3>Match</h3>
+        <p class="copy">Trip Bridge ranks real packages and explains why each one fits.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="lightfield">
+  <!-- ---------------------------- PLANE JOURNEY ---------------------------- -->
+  <section class="journey" id="journey">
+    <div class="sticky">
+      <div class="story">
+        <article class="on">
+          <p class="eyebrow">Start with inspiration</p>
+          <h2>You saw a place<br />worth going.</h2>
+          <p>Drop in the travel clip that made you stop scrolling.</p>
+        </article>
+        <article>
+          <p class="eyebrow">Gemini reads the journey</p>
+          <h2>Place, pace<br />and feeling.</h2>
+          <p>The video becomes destination, activity and travel-style signals.</p>
+        </article>
+        <article>
+          <p class="eyebrow">Trip Bridge connects it</p>
+          <h2>From saved video<br />to real departure.</h2>
+          <p>Those signals meet the package library and produce an explained match.</p>
+        </article>
+      </div>
+
+      <div class="route">
+        <div class="icon plane" id="plane">
+          <img src="/static/images/journey-plane.svg?v=3" alt="" />
+        </div>
+        <div class="icon airport">
+          <img src="/static/images/journey-airport.svg" alt="" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------- TRAVEL STYLES ---------------------------- -->
+  <section class="section">
+    <div class="shell center">
+      <div class="heading reveal">
+        <p class="eyebrow">Travel styles</p>
+        <h2 class="headline">It matches the mood,<br />not just the map.</h2>
+      </div>
+      <div class="tags reveal">
+        <span class="tag lift">adventure</span>
+        <span class="tag lift">budget</span>
+        <span class="tag lift">city</span>
+        <span class="tag lift">cruise</span>
+        <span class="tag lift">cultural</span>
+        <span class="tag lift">family</span>
+        <span class="tag lift">food</span>
+        <span class="tag lift">luxury</span>
+        <span class="tag lift">nightlife</span>
+        <span class="tag lift">relaxation</span>
+        <span class="tag lift">romance</span>
+        <span class="tag lift">wellness</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------- MATCHING RULES --------------------------- -->
+  <section class="section">
+    <div class="shell">
+      <div class="heading center reveal">
+        <p class="eyebrow">How the match is made</p>
+        <h2 class="headline">Place first,<br />then the mood.</h2>
+      </div>
+      <div class="grid reveal">
+        <article class="card light-card lift">
+          <h3>The place lines up</h3>
+          <p class="copy">Locations from the footage are checked against destinations and regions.</p>
+        </article>
+        <article class="card light-card lift">
+          <h3>The style overlaps</h3>
+          <p class="copy">A package qualifies when it shares at least one travel style with the clip.</p>
+        </article>
+        <article class="card light-card lift">
+          <h3>More overlap ranks higher</h3>
+          <p class="copy">The closest match in feel appears before weaker matches.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------- EXAMPLE RESULT --------------------------- -->
+  <section class="section">
+    <div class="shell">
+      <div class="heading center reveal">
+        <p class="eyebrow">Nothing hidden</p>
+        <h2 class="headline">Every match<br />shows its working.</h2>
+      </div>
+      <article class="card light-card result lift reveal">
+        <h3>Vietnam Highlights</h3>
+        <div class="price">From A$2,199</div>
+        <div class="meta">Vietnam | 9 nights | tour</div>
+        <div class="reason">
+          <b>Why matched:</b> Vietnam plus cultural, food and adventure travel styles.
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ------------------------------ GEMINI TABS ---------------------------- -->
+  <section class="section">
+    <div class="shell center">
+      <div class="heading reveal">
+        <p class="eyebrow">Why Gemini matters</p>
+        <h2 class="headline">One model.<br />Three useful jobs.</h2>
+      </div>
+
+      <div class="tabs reveal" role="tablist">
+        <button class="glass-button glass-button--light tab" data-glass="light"
+          data-panel="watch" aria-selected="true">Watch the clip</button>
+        <button class="glass-button glass-button--light tab" data-glass="light"
+          data-panel="feel" aria-selected="false">Read the feeling</button>
+        <button class="glass-button glass-button--light tab" data-glass="light"
+          data-panel="explain" aria-selected="false">Explain the match</button>
+      </div>
+
+      <article class="panel card light-card" id="watch">
+        <div class="badge">01</div>
+        <div>
+          <h3>Gemini watches the complete video.</h3>
+          <p>It considers scenes, movement, landmarks and context together.</p>
+          <p class="benefit"><b>Better because:</b> the destination does not need to be written on screen.</p>
+        </div>
+      </article>
+      <article class="panel card light-card" id="feel" hidden>
+        <div class="badge">02</div>
+        <div>
+          <h3>It understands the travel feeling.</h3>
+          <p>It can recognise adventure, culture, luxury, relaxation and more.</p>
+          <p class="benefit"><b>Better because:</b> two clips from one city can lead to different holidays.</p>
+        </div>
+      </article>
+      <article class="panel card light-card" id="explain" hidden>
+        <div class="badge">03</div>
+        <div>
+          <h3>It creates transparent matches.</h3>
+          <p>Structured destination and style signals can be checked against the library.</p>
+          <p class="benefit"><b>Better because:</b> every recommendation can show what matched.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
+
+<!-- -------------------------------- CLOSING -------------------------------- -->
+<section class="section dark closing fade-t">
+  <div class="aurora"><i></i><i></i><i></i></div>
+  <div class="shell layer reveal">
+    <h2 class="display">Got a video<br /><span class="shimmer-text">in mind?</span></h2>
+    <p class="lede">It takes one upload to find out where it goes.</p>
+    <div class="cta">
+      <a class="glass-button glass-button--light" data-glass="light" href="/match">
+        Try the matcher &rarr;
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">Trip Bridge, a capstone project built on the Flight Centre package library.</footer>
+<div class="grain" aria-hidden="true"></div>
+{% endblock %}
+
+{% block scripts %}
+  {# The hero plays whatever media/ holds, so the list is handed over at render
+     time rather than hard-coded in the page script. #}
+  <script>window.HERO_VIDEOS = {{ hero_videos | tojson }};</script>
+  <script src="/static/js/pages/landing.js"></script>
+{% endblock %}

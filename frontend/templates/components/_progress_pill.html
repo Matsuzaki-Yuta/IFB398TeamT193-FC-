@@ -1,0 +1,32 @@
+{# How far through the booking flow this page is: a ring plus "N/total done".
+
+   N is the number of steps FINISHED, so it is the current step's index, not its
+   number: Customer shows 1/6, Inspiration 2/6, Insights 3/6, Build Package 4/6,
+   Final Quote 5/6. Both numbers come from the same PROCESS_STEPS the nav bar
+   uses, via process_nav_context(), so adding a step to flow.py updates the
+   pill and the nav together with nothing else to edit.
+
+   Include it with no arguments, inside the page's own .page-head /
+   .results-head, next to the headline:
+
+       {% include "components/_progress_pill.html" %}
+
+   Nothing to drive from JS: a page's position in the flow cannot change while
+   you are looking at it, so the ring is drawn server-side. #}
+{% if process_steps %}
+  {% set total = process_steps | length %}
+  {% set done = process_current_index %}
+  {# 2 * PI * r for the r=10.5 ring: offset the full circumference to hide the
+     arc, zero to show all of it. #}
+  {% set circumference = 65.97 %}
+  <div class="progress-pill">
+    <svg class="progress-ring" viewBox="0 0 26 26" aria-hidden="true">
+      <circle cx="13" cy="13" r="10.5" fill="none" stroke="var(--line)" stroke-width="3"></circle>
+      <circle class="progress-arc" cx="13" cy="13" r="10.5" fill="none" stroke="var(--fc-red)"
+              stroke-width="3" stroke-linecap="round" stroke-dasharray="{{ circumference }}"
+              stroke-dashoffset="{{ (circumference - circumference * done / total) | round(2) }}"
+              transform="rotate(-90 13 13)"></circle>
+    </svg>
+    <span class="n"><span class="progress-done">{{ done }}</span><span>/{{ total }} done</span></span>
+  </div>
+{% endif %}

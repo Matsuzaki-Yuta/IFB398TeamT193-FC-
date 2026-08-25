@@ -1,0 +1,41 @@
+{# The shell every page shares: head, navbar, process nav and the scripts that
+   must load before any page script. Pages extend this and fill four blocks:
+   title, styles, content and scripts.
+
+   Load order matters and is enforced here so no page has to remember it:
+   liquid-glass.js defines LiquidGlass.apply(), dom-utils.js defines $(),
+   flow-store.js defines FlowStore, and all three run before the page script in
+   the scripts block below.
+
+   Note the Jinja comment syntax: an HTML comment would still have its tags
+   parsed, so a mention of a block tag inside one opens a real block. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Trip Bridge{% endblock %}</title>
+
+  <link rel="stylesheet" href="/static/css/base/theme.css" />
+  <link rel="stylesheet" href="/static/css/components/navbar.css" />
+  <link rel="stylesheet" href="/static/css/components/process-nav.css" />
+  <link rel="stylesheet" href="/static/css/components/progress-pill.css" />
+  {% block styles %}{% endblock %}
+</head>
+<body>
+
+{% include "components/_navbar.html" %}
+{# A page that passes no process_nav_context simply has no bar, rather than an
+   empty strip where the six steps should be. #}
+{% if process_steps %}{% include "components/_process_nav.html" %}{% endif %}
+
+{% block content %}{% endblock %}
+
+<script src="/static/js/vendor/liquid-glass.js"></script>
+<script src="/static/js/components/navbar.js"></script>
+<script src="/static/js/core/theme.js"></script>
+<script src="/static/js/core/dom-utils.js"></script>
+<script src="/static/js/core/flow-store.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,30 @@
+/* Customer-page specifics — the shared page shell lives in flow.css, and the
+   progress pill in components/progress-pill.css now that every step has one. */
+
+/* .money-field / .field-suffix moved to components/flow.css — the quote page
+   uses them too. */
+.budget-slider { width: 100%; margin-top: 10px; accent-color: var(--fc-red); cursor: pointer; }
+.budget-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+/* age-range chip selector */
+.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--text-dim);
+  background: var(--bg-sunk); border: 1.5px solid var(--line); border-radius: 999px;
+  padding: 8px 15px; cursor: pointer; transition: all .2s var(--ease);
+}
+.chip:hover { border-color: var(--line-strong); }
+.chip.is-selected { background: var(--fc-red); border-color: var(--fc-red); color: #fff; }
+
+/* traveller stepper */
+.stepper {
+  display: inline-flex; align-items: center; gap: 0;
+  border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg-sunk); overflow: hidden; width: fit-content;
+}
+.stepper button {
+  width: 40px; height: 42px; border: none; background: none; color: var(--text);
+  font-size: 17px; font-weight: 600; cursor: pointer; transition: background .2s var(--ease);
+}
+.stepper button:hover { background: var(--line); }
+.stepper button:disabled { color: var(--text-dim); cursor: not-allowed; background: none; }
+.stepper .stepper-value { width: 46px; text-align: center; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
