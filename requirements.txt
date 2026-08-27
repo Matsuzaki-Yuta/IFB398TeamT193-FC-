@@ -5,7 +5,20 @@
 #    python -m venv .venv
 # 2) Install the dependencies
 #    .venv\Scripts\python.exe -m pip install -r requirements.txt
+#    (macOS/Linux: .venv/bin/python -m pip install -r requirements.txt)
+#
+# Versions are pinned with ~= so that everyone on the team gets the same minor
+# release. An unpinned requirements file is the classic "works on my machine"
+# bug two weeks before a demo.
 
-flask
-google-genai
-python-dotenv
+flask~=3.1
+google-genai~=1.0
+python-dotenv~=1.0
+
+# Builds the PDF attached to the quote email. Pure Python, so "pip install"
+# works on Windows without any system libraries. If it is missing, the quote is
+# still emailed — just without the attachment. See backend/services/pdf_service.py
+reportlab~=4.2
+
+# Testing only. Not needed to run the app.
+pytest~=8.0

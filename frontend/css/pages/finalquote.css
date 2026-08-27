@@ -188,3 +188,63 @@
   /* the price moves under the text rather than squeezing the name */
   .chosen-price { grid-column: 2; text-align: left; }
 }
+
+/* ---- sending: button state, failure message, persistent confirmation ----
+   Added with the /api/quote/send feature. The confirmation card above is the
+   loud "check your inbox" moment; these three are the quieter states around it
+   — waiting, failing, and the record that stays on the page afterwards. ---- */
+
+/* The spinner only exists while the request is in flight, so it is laid on top
+   of the paper-plane icon rather than beside it. Otherwise the button's width
+   changes as it swaps, which reads as a flicker. */
+.send-btn { position: relative; }
+.send-btn .send-icon,
+.send-btn .send-spinner { transition: opacity .18s var(--ease); }
+.send-btn .send-spinner {
+  position: absolute; left: 50%; margin-left: -58px;
+  width: 15px; height: 15px; border-radius: 50%;
+  border: 2px solid currentColor; border-top-color: transparent;
+  opacity: 0; pointer-events: none;
+}
+.send-btn.is-sending .send-icon { opacity: 0; }
+.send-btn.is-sending .send-spinner { opacity: .85; animation: send-spin .7s linear infinite; }
+.send-btn[disabled] { opacity: .55; cursor: not-allowed; }
+.send-btn[aria-busy="true"] { cursor: progress; }
+
+@keyframes send-spin { to { transform: rotate(360deg); } }
+
+/* Anyone who has turned motion down gets the label change and nothing else. */
+@media (prefers-reduced-motion: reduce) {
+  .send-btn.is-sending .send-spinner { animation: none; opacity: .85; }
+}
+
+/* ---- the failure message under the button ---- */
+.send-error[hidden] { display: none; }
+.send-error {
+  display: flex; gap: 8px; margin: 12px 0 0;
+  padding: 10px 12px; border-radius: 11px;
+  border: 1px solid rgba(213,1,24,.28); background: rgba(213,1,24,.06);
+  font-size: 12.5px; line-height: 1.5; color: var(--fc-red);
+}
+
+/* ---- the strip that stays behind once the card is dismissed ---- */
+.sent-strip[hidden] { display: none; }
+.sent-strip {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 16px; padding: 11px 14px; border-radius: 12px;
+  border: 1px solid rgba(18,128,90,.26); background: rgba(36,180,126,.09);
+  font-size: 12.5px; line-height: 1.45; color: #0F6B4C;
+  animation: strip-in .35s var(--ease-out) both;
+}
+.sent-strip-tick { width: 15px; height: 15px; flex: none; }
+.sent-strip-text { min-width: 0; word-break: break-word; }
+
+@keyframes strip-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* ---- the note under the facts on the confirmation card ---- */
+.sent-note { margin: -10px 0 20px; font-size: 12px; line-height: 1.5; color: var(--text-dim); }
+
+/* Printing a quote should not carry the on-screen chrome for the send itself. */
+@media print {
+  .send-error, .sent-strip { display: none !important; }
+}

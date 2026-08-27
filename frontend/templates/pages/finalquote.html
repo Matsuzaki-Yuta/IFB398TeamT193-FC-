@@ -50,6 +50,7 @@
           {# Design-time convenience: lets the page be reviewed without re-running
              a video analysis. Safe to delete once the flow is being demoed live. #}
           <button type="button" class="link-btn" id="sampleBtn">Preview with sample data</button>
+          <span class="card-note" style="display:block; margin-top:6px;">Loads a real package. Add an email on the Customer step to test the send.</span>
         </div>
       </section>
 
@@ -104,7 +105,7 @@
             </span>
             <span class="section-label">Send to</span>
           </div>
-          <span class="card-note">Demo &mdash; nothing is emailed yet</span>
+          <span class="card-note">A PDF copy is attached automatically</span>
         </div>
 
         {# Read-only on purpose: who the traveller is was settled on the customer
@@ -130,6 +131,13 @@
         <div class="field" style="margin-top:18px;">
           <label for="qMessage">Message</label>
           <textarea id="qMessage" rows="3" placeholder="Hi Jordan — here's the trip we put together from your video. Hold it with a deposit any time in the next two weeks."></textarea>
+        </div>
+
+        {# Stays on the page after the confirmation card is dismissed, so the
+           agent can still see where the quote went and under which reference. #}
+        <div class="sent-strip" id="sentStrip" hidden role="status">
+          <svg class="sent-strip-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          <span class="sent-strip-text" id="sentStripText"></span>
         </div>
       </section>
 
@@ -161,9 +169,15 @@
         </div>
 
         <button type="button" class="glass-button glass-button--dark send-btn" id="sendBtn" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
-          Send quote
+          <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+          <span class="send-spinner" aria-hidden="true"></span>
+          <span id="sendLabel">Send quote</span>
         </button>
+
+        {# role="alert" so a screen reader announces the failure the moment it
+           appears, rather than leaving it as silent red text. #}
+        <p class="send-error" id="sendError" role="alert" hidden></p>
+
         <p class="summary-fineprint">Prices are indicative and per person, twin share, in AUD. Airfares excluded unless listed in the inclusions.</p>
       </div>
     </aside>
@@ -179,9 +193,12 @@
     <h2 id="sentTitle">Quote sent</h2>
     <p class="sent-sub" id="sentSub"></p>
     <div class="sent-facts">
+      <div><span>Sent to</span><b id="sentTo"></b></div>
       <div><span>Package</span><b id="sentPkg"></b></div>
       <div><span>Total</span><b id="sentTotal"></b></div>
+      <div><span>Reference</span><b id="sentRef"></b></div>
     </div>
+    <p class="sent-note" id="sentNote"></p>
     <div class="sent-actions">
       <a class="glass-button glass-button--dark" id="sentCta" href="/landing" data-glass="dark">Start a new trip &rarr;</a>
     </div>
