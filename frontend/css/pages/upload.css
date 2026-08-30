@@ -59,8 +59,136 @@ input[type="file"] { max-width: 100%; font: inherit; font-size: 13px; color: var
 
 #status { margin-top: 16px; color: var(--text-dim); font-style: italic; font-size: 13.5px; min-height: 1.4em; }
 
+/* ==========================================================================
+   THE ANALYSING STATE
+   What the card shows between "Analyse & Match" and the jump to /analysis.
+   The chooser is swapped out rather than pushed down, so the card keeps its
+   footprint and the page does not jump when the dial appears.
+   ========================================================================== */
+
+.analysing {
+  display: none;
+  grid-template-columns: auto 1fr; gap: 46px;
+  align-items: center; padding: 26px 8px 18px;
+}
+.card-foot { display: none; margin-top: 8px; padding-top: 18px; border-top: 1px solid var(--line); }
+.foot-hint { font-size: 13px; color: var(--text-dim); }
+
+.form-card.is-analysing .choice-grid,
+.form-card.is-analysing .paste-row,
+.form-card.is-analysing .form-actions { display: none; }
+.form-card.is-analysing .analysing { display: grid; }
+.form-card.is-analysing .card-foot { display: block; }
+
+/* ---- the dial ---- */
+/* Two states only: a turning sweep while the work happens, then a green
+   close. No percentage — the app cannot know how far through the clip
+   Gemini is, and a bar that creeps to 90% and sits there is what makes
+   people reload. */
+.dial { position: relative; width: 168px; height: 168px; flex: none; }
+.dial svg { display: block; width: 168px; height: 168px; }
+
+.ring-track { fill: none; stroke: var(--line); stroke-width: 7; }
+.ring-live {
+  fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 84px 84px;
+  transition: stroke .5s var(--ease);
+}
+.ring-rot { transform-origin: 84px 84px; }
+
+.dial.is-sweeping .ring-rot  { animation: dial-turn 1.5s linear infinite; }
+.dial.is-sweeping .ring-live { animation: dial-breathe 1.7s var(--ease) infinite; }
+@keyframes dial-turn { to { transform: rotate(360deg); } }
+@keyframes dial-breathe {
+  0%   { stroke-dasharray: 36 470;  stroke-dashoffset: 0; }
+  48%  { stroke-dasharray: 250 256; stroke-dashoffset: -66; }
+  100% { stroke-dasharray: 36 470;  stroke-dashoffset: -505; }
+}
+
+.dial.is-done .ring-live { stroke: var(--step-done, #1AA260); }
+
+.ring-tick {
+  fill: none; stroke: var(--step-done, #1AA260); stroke-width: 8;
+  stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 62; stroke-dashoffset: 62; opacity: 0;
+}
+.dial.is-done .ring-tick { opacity: 1; animation: tick-draw .5s var(--ease-out) .34s forwards; }
+@keyframes tick-draw { to { stroke-dashoffset: 0; } }
+
+/* centre readout */
+.dial-face {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 9px; text-align: center;
+  transition: opacity .3s var(--ease);
+}
+.dial.is-done .dial-face { opacity: 0; }
+.dial-sub { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); }
+.dial-dots { display: flex; gap: 6px; align-items: center; }
+.dial-dots i {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: .28;
+  animation: dot-lift 1.25s var(--ease) infinite;
+}
+.dial-dots i:nth-child(2) { animation-delay: .16s; }
+.dial-dots i:nth-child(3) { animation-delay: .32s; }
+@keyframes dot-lift { 0%, 70%, 100% { opacity: .26; transform: none; } 35% { opacity: 1; transform: translateY(-3px); } }
+
+/* ---- the phase ladder: where the detail lives now the number is gone ---- */
+.phases { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.phase-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; letter-spacing: -.022em; color: var(--text); }
+.phase-file { display: flex; align-items: center; gap: 8px; margin: 0 0 20px; font-size: 13px; color: var(--text-dim); }
+.phase-file b { font-weight: 650; color: var(--text); }
+.phase-file .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--line-strong); flex: none; }
+.phase-file .dot[hidden], .phase-file span[hidden] { display: none; }
+
+.phase {
+  display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 13px;
+  padding: 11px 2px; border-top: 1px solid var(--line);
+}
+.phase:first-of-type { border-top: 0; }
+
+.phase-mark {
+  width: 20px; height: 20px; border-radius: 50%; flex: none;
+  border: 2px solid var(--line-strong); background: var(--bg-elev);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .35s var(--ease), border-color .35s var(--ease);
+}
+.phase-mark svg { width: 11px; height: 11px; opacity: 0; color: #fff; }
+
+.phase-label { font-size: 14.5px; font-weight: 600; color: var(--text-dim); transition: color .35s var(--ease); }
+.phase-meta {
+  font-size: 12.5px; font-weight: 600; color: var(--text-dim); opacity: 0;
+  font-variant-numeric: tabular-nums; transition: opacity .35s var(--ease);
+}
+
+.phase.is-live .phase-mark { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,113,227,.11); }
+.phase.is-live .phase-mark::after {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  animation: mark-pulse 1.5s var(--ease) infinite;
+}
+@keyframes mark-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.62); opacity: .55; } }
+.phase.is-live .phase-label { color: var(--text); font-weight: 700; }
+.phase.is-live .phase-meta { opacity: 1; color: var(--accent); }
+
+.phase.is-done .phase-mark { background: var(--step-done, #1AA260); border-color: var(--step-done, #1AA260); }
+.phase.is-done .phase-mark svg { opacity: 1; }
+.phase.is-done .phase-label { color: var(--text); }
+.phase.is-done .phase-meta { opacity: 1; }
+
 @media (max-width: 800px) {
   .choice-grid { grid-template-columns: 1fr; }
   .or-rail { flex-direction: row; padding: 22px 0; width: 100%; }
   .or-rail .rail { flex: 1; width: auto; height: 1px; }
+
+  .analysing { grid-template-columns: 1fr; justify-items: center; gap: 30px; text-align: center; }
+  .phases { width: 100%; }
+  .phase-file { justify-content: center; }
+}
+
+/* theme.css damps transitions under reduced motion but leaves keyframes
+   running, so the dial has to stop itself. The ladder still advances, so
+   the information survives without the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .dial .ring-rot, .dial .ring-live, .dial-dots i,
+  .phase.is-live .phase-mark::after, .dial.is-done .ring-tick { animation: none !important; }
+  .dial.is-done .ring-tick { stroke-dashoffset: 0; }
 }

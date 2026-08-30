@@ -94,6 +94,66 @@
       <input type="url" id="pasteLink" placeholder="https://instagram.com/reel/&hellip;" />
     </div>
 
+    <!-- ---------- the analysing state ---------- -->
+    <!-- Hidden until the card gains .is-analysing; see upload.css. The dial
+         turns for the whole wait and closes green once the matches land. -->
+    <div class="analysing">
+      <div class="dial" id="dial">
+        <svg viewBox="0 0 168 168" role="img" aria-labelledby="dialLabel">
+          <title id="dialLabel">Analysis in progress</title>
+          <circle class="ring-track" cx="84" cy="84" r="80" />
+          <g class="ring-rot">
+            <circle class="ring-live" id="ringLive" cx="84" cy="84" r="80" />
+          </g>
+          <path class="ring-tick" d="M60 86 L77 103 L110 68" />
+        </svg>
+        <div class="dial-face">
+          <div class="dial-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="dial-sub" id="dialSub">Working</div>
+        </div>
+      </div>
+
+      <div class="phases">
+        <p class="phase-title" id="phaseTitle">Sending your video</p>
+        <p class="phase-file">
+          <b id="fileName">your video</b>
+          <span class="dot" aria-hidden="true"></span>
+          <span id="fileSize"></span>
+          <span class="dot" id="fileDot2" aria-hidden="true" hidden></span>
+          <span id="fileLength" hidden></span>
+        </p>
+
+        <div class="phase is-live" id="ph1">
+          <span class="phase-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,12 10,18 20,6" /></svg>
+          </span>
+          <span class="phase-label">Sending your video</span>
+          <span class="phase-meta" id="meta1">on its way</span>
+        </div>
+
+        <div class="phase" id="ph2">
+          <span class="phase-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,12 10,18 20,6" /></svg>
+          </span>
+          <span class="phase-label">Reading the place, pace and mood</span>
+          <span class="phase-meta" id="meta2">Gemini</span>
+        </div>
+
+        <div class="phase" id="ph3">
+          <span class="phase-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,12 10,18 20,6" /></svg>
+          </span>
+          <span class="phase-label">Matching packages</span>
+          <span class="phase-meta" id="meta3">&mdash;</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-foot">
+      <span class="foot-hint" id="footHint">This usually takes under a minute. You can leave this tab open.</span>
+    </div>
+
+    <!-- errors only: the progress itself is the block above -->
     <div id="status" role="status" aria-live="polite"></div>
 
     <div class="form-actions">
