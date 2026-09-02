@@ -42,7 +42,7 @@ def analyze_video_with_gemini(video_bytes, mime_type):
             video_file = client.files.get(name=video_file.name)
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash", contents=[video_file, PROMPT]
+            model="gemini-3.6-flash", contents=[video_file, PROMPT]
         )
         raw_response = response.text.strip()
         if raw_response.startswith("```"):
