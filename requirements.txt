@@ -11,6 +11,11 @@
 # release. An unpinned requirements file is the classic "works on my machine"
 # bug two weeks before a demo.
 
+flask
+google-genai
+python-dotenv
+pytest
+pytest-cov
 flask~=3.1
 google-genai~=1.0
 python-dotenv~=1.0
