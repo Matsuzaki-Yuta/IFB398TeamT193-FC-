@@ -9,3 +9,5 @@
 flask
 google-genai
 python-dotenv
+pytest
+pytest-cov

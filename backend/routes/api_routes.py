@@ -1,7 +1,14 @@
 from flask import Blueprint, current_app, jsonify, request
 
+from backend.routes.page_routes import analysis
 from backend.services.gemini_service import analyze_video_with_gemini
 from backend.services.matching_service import fetch_matching_packages
+
+
+ALLOWED_VIDEO_MIME_TYPES = {
+    "video/mp4",
+    "video/quicktime",
+}
 
 # Creates a group of API routes.
 # Every endpoint in this file automatically starts with "/api".
@@ -102,6 +109,14 @@ def analyse_video():
     video_file = request.files["video"]
     if not video_file.filename:
         return error_response("EMPTY_FILE", "Please select a video file.", 400)
+
+    # Check that the uploaded file is a supported video type.
+    if video_file.mimetype not in ALLOWED_VIDEO_MIME_TYPES:
+        return error_response(
+        "UNSUPPORTED_FILE_TYPE",
+        "Only MP4 and MOV video files are supported.",
+        415
+    )
     
     # The field may exist even though the user did not select a file.
     try:
@@ -189,6 +204,23 @@ def match_packages():
         )
 
     analysis = data["analysis"]
+
+    detected_destinations = analysis.get("detected_destinations")
+    travel_style = analysis.get("travel_style")
+
+    if detected_destinations is not None and not isinstance(detected_destinations, list):
+        return error_response(
+            "INVALID_DESTINATIONS",
+            "detected_destinations must be a list.",
+            400
+        )
+
+    if travel_style is not None and not isinstance(travel_style, list):
+        return error_response(
+            "INVALID_TRAVEL_STYLE",
+            "travel_style must be a list.",
+            400
+        )
 
     # Get specific destinations detected by Gemini.
     #

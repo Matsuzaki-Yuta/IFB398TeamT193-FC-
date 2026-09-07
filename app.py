@@ -30,6 +30,8 @@ def create_app():
         static_url_path="/static",
     )
 
+    app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+
     # pages renders HTML, api returns JSON under /api.
     app.register_blueprint(pages)
     app.register_blueprint(api)
