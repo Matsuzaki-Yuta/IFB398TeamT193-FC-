@@ -89,7 +89,10 @@
     $("sumTotal").textContent = money(selected ? t.total : 0);
     $("sumDeposit").textContent = money(selected ? t.deposit : 0);
 
-    $("sendBtn").disabled = !selected;
+    // "sending" is declared further down; var-hoisting makes it undefined on the
+    // first pass, which is falsy, so the button behaves normally on load and
+    // stays locked if an input changes mid-send.
+    $("sendBtn").disabled = !selected || !!sending;
 
     var days = Math.max(1, Number($("qValid").value) || 1);
     var until = new Date();
@@ -138,17 +141,121 @@
     .forEach(id => $(id).addEventListener("input", () => { save(); render(); }));
 
   // ── sending ─────────────────────────────────────────────────────────────────
-  // Nothing leaves the browser: there is no mail route yet, so this is the
-  // confirmation the real one will show once /send-quote exists.
-  $("sendBtn").addEventListener("click", () => {
-    if (!selected) return;
-    var to = $("qEmail").value.trim();
+  // The page adds up the total on the left for the agent to watch, but that
+  // number is not what gets emailed. Only the package id goes to the server,
+  // which rebuilds every figure from packages.db — a price typed into the dev
+  // tools must never reach a customer's inbox.
 
-    $("sentSub").textContent = to ? "Sent to " + to : "Add an email address to send it on.";
+  var sending = false;
+
+  function showError(message) {
+    $("sendError").textContent = message;
+    $("sendError").hidden = !message;
+  }
+
+  function setSending(on) {
+    sending = on;
+    $("sendBtn").disabled = on || !selected;
+    $("sendBtn").classList.toggle("is-sending", on);
+    $("sendLabel").textContent = on ? "Sending\u2026" : "Send quote";
+    $("sendBtn").setAttribute("aria-busy", on ? "true" : "false");
+  }
+
+  // The two readonly fields are filled from the customer step. If the agent
+  // skipped it there is nothing to send to, and saying so here is more use than
+  // letting the request fail with a 400.
+  function recipient() {
+    var email = $("qEmail").value.trim();
+    if (!email) {
+      showError("No email address yet — add one on the Customer step, then come back.");
+      return null;
+    }
+    return email;
+  }
+
+  function payload() {
+    return {
+      customer: {
+        name: $("qName").value.trim(),
+        email: $("qEmail").value.trim(),
+        travellers: Number($("qTravellers").value) || 1
+      },
+      quote: {
+        departure: $("qDeparture").value,
+        valid_days: Number($("qValid").value) || 14,
+        message: $("qMessage").value.trim()
+      },
+      selected_package_id: selected.id
+    };
+  }
+
+  // Every error path ends with a sentence the agent can act on. A bare
+  // "something went wrong" in front of the industry partner is worse than
+  // no message at all.
+  function messageFor(status, body) {
+    if (body && body.error && body.error.message) return body.error.message;
+    if (status === 0) return "Could not reach the server. Check that Flask is still running.";
+    return "The quote could not be sent (error " + status + "). Please try again.";
+  }
+
+  function showSent(result) {
+    var pdfNote = result.attached_pdf
+      ? "The quote is attached as a PDF."
+      : "The quote is in the body of the email.";
+
+    $("sentTitle").textContent = "Quote sent";
+    $("sentSub").textContent =
+      "We've emailed it to " + result.sent_to +
+      ". It usually arrives within a minute. If not, check your spam folder.";
+    $("sentTo").textContent = result.sent_to;
     $("sentPkg").textContent = selected.name;
-    $("sentTotal").textContent = money(totals().total);
+    $("sentTotal").textContent = result.total;
+    $("sentRef").textContent = result.quote_reference;
+    $("sentNote").textContent = pdfNote + " Valid until " + result.valid_until + ".";
+
     $("sentVeil").hidden = false;
     $("sentCta").focus();
+
+    // and the strip that survives the card being dismissed
+    $("sentStripText").textContent =
+      "Sent to " + result.sent_to + " · reference " + result.quote_reference;
+    $("sentStrip").hidden = false;
+  }
+
+  $("sendBtn").addEventListener("click", function () {
+    if (!selected || sending) return;
+
+    showError("");
+    if (!recipient()) return;
+
+    setSending(true);
+
+    fetch("/api/quote/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload())
+    })
+      .then(function (response) {
+        // .json() rejects on an empty or HTML body — a 500 page, most often —
+        // so it is caught here and the status still drives the message.
+        return response.json()
+          .catch(function () { return null; })
+          .then(function (body) { return { status: response.status, body: body }; });
+      })
+      .then(function (result) {
+        if (result.status === 200 && result.body && result.body.success) {
+          showSent(result.body);
+        } else {
+          showError(messageFor(result.status, result.body));
+        }
+      })
+      .catch(function () {
+        // Network-level failure: the request never got an answer at all.
+        showError(messageFor(0, null));
+      })
+      .then(function () {
+        setSending(false);
+      });
   });
 
   // The card's only button starts a new trip, so escape and a click on the
@@ -165,16 +272,56 @@
   });
 
   // ── design-time sample data ─────────────────────────────────────────────────
-  // Lets this page be looked at without re-running a video analysis. Remove
-  // this block and #sampleBtn in finalquote.html once the flow is demoed live.
-  $("sampleBtn").addEventListener("click", () => {
-    sessionStorage.setItem("tripBridgePackages", JSON.stringify([
-      { id: "sample-1", name: "European Whirl", destination: "Europe", duration_nights: 11,
-        price_from_aud: 6135, category: "tour", vibe_tags: ["cultural", "city", "food"],
-        matched_vibes: ["cultural", "city"] }
-    ]));
-    FlowStore.patch(FlowStore.QUOTE, { packageId: "sample-1" });
-    window.location.reload();
+  // Lets this page be worked on, and the email tested, without re-running a
+  // video analysis every time.
+  //
+  // It asks the backend for real packages rather than inventing one. A made-up
+  // id would render fine here and then be rejected by /api/quote/send, which
+  // rebuilds the quote from packages.db and has never heard of it — so the one
+  // button meant to make testing easy would fail at the only step worth testing.
+  //
+  // Remove this block and #sampleBtn in finalquote.html once the flow is being
+  // demoed live end to end.
+  $("sampleBtn").addEventListener("click", function () {
+    var button = $("sampleBtn");
+    button.disabled = true;
+    button.textContent = "Loading a sample…";
+
+    fetch("/api/packages/match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        analysis: {
+          detected_destinations: ["Europe"],
+          destination_region: "Europe",
+          travel_style: ["cultural", "city"]
+        }
+      })
+    })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        var packages = (data && data.packages) || [];
+        if (!packages.length) throw new Error("no packages matched");
+
+        sessionStorage.setItem("tripBridgePackages", JSON.stringify(packages.slice(0, 3)));
+        FlowStore.patch(FlowStore.QUOTE, { packageId: packages[0].id });
+
+        // Only fills in what the customer step has not already answered, so
+        // this never overwrites a real address someone is testing with.
+        var saved = FlowStore.read(FlowStore.CUSTOMER);
+        FlowStore.patch(FlowStore.CUSTOMER, {
+          custName: saved.custName || "Jordan Lee",
+          custEmail: saved.custEmail || "",
+          travellers: saved.travellers || 2
+        });
+
+        window.location.reload();
+      })
+      .catch(function () {
+        button.disabled = false;
+        button.textContent = "Preview with sample data";
+        showError("Could not load a sample package. Is packages.db in the project root?");
+      });
   });
 
   // ── go ──────────────────────────────────────────────────────────────────────
