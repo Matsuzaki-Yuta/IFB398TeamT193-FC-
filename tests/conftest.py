@@ -5,27 +5,18 @@ Nothing here touches the network. The SMTP settings below are fake and the one
 test that exercises the send path replaces the transport, so the suite can run
 on a laptop with no internet and in a marking environment with no .env file.
 """
-
 import os
 import sys
+import sqlite3
 
 import pytest
 
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
 sys.path.insert(0, PROJECT_ROOT)
 
-from app import create_app
-
-@pytest.fixture
-def app():
-    app = create_app()
-    app.config.update({
-        "TESTING": True
-    })
-    return app
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, PROJECT_ROOT)
 
 FAKE_SMTP = {
     "SMTP_HOST": "localhost",
@@ -39,17 +30,19 @@ FAKE_SMTP = {
 
 @pytest.fixture
 def smtp_env(monkeypatch):
-    """Puts fake SMTP settings in the environment for the duration of a test."""
     for key, value in FAKE_SMTP.items():
         monkeypatch.setenv(key, value)
+
     return FAKE_SMTP
 
 
 @pytest.fixture
 def app():
     from app import create_app
+
     application = create_app()
     application.config.update(TESTING=True)
+
     return application
 
 
@@ -59,11 +52,60 @@ def client(app):
 
 
 @pytest.fixture
-def package_id():
-    """A real id from packages.db, so the tests exercise the real query."""
-    from backend.models.database import get_connection
-    with get_connection() as connection:
-        row = connection.execute(
-            "SELECT id FROM packages WHERE price_from_aud > 0 LIMIT 1"
-        ).fetchone()
-    return row["id"]
+def test_package_database(tmp_path, monkeypatch):
+    db_path = tmp_path / "packages.db"
+
+    connection = sqlite3.connect(db_path)
+
+    connection.execute(
+        """
+        CREATE TABLE packages (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            destination TEXT,
+            price_from_aud REAL,
+            inclusions TEXT,
+            highlights TEXT,
+            vibe_tags TEXT
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        INSERT INTO packages (
+            id,
+            name,
+            destination,
+            price_from_aud,
+            inclusions,
+            highlights,
+            vibe_tags
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            "package-001",
+            "Bali Escape",
+            "Bali, Indonesia",
+            2500,
+            '["Hotel", "Breakfast"]',
+            '["Beach", "Temple"]',
+            '["Adventure", "Wellness"]',
+        )
+    )
+
+    connection.commit()
+    connection.close()
+
+    monkeypatch.setattr(
+        "backend.models.database.DB_PATH",
+        str(db_path)
+    )
+
+    return db_path
+
+
+@pytest.fixture
+def package_id(test_package_database):
+    return "package-001"
