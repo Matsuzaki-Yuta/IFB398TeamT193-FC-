@@ -1,7 +1,17 @@
+import time
+from collections import defaultdict, deque
+from threading import Lock
+
 from flask import Blueprint, current_app, jsonify, request
 
+from backend.services.email_service import (
+    EmailConfigurationError, EmailSendError, load_settings,
+)
 from backend.services.gemini_service import analyze_video_with_gemini
 from backend.services.matching_service import fetch_matching_packages
+from backend.services.pdf_service import PDF_AVAILABLE
+from backend.services.quote_mail import send_quote_email
+from backend.services.quote_service import QuoteValidationError, build_quote
 
 # Creates a group of API routes.
 # Every endpoint in this file automatically starts with "/api".
@@ -33,6 +43,50 @@ def error_response(code, message, status_code):
         "success": False,
         "error": {"code": code, "message": message},
     }), status_code
+
+
+# ── send throttle ───────────────────────────────────────────────────────────────
+# /api/quote/send needs no login and will email any address it is given, which
+# makes it the one endpoint in this app that could be used to spam someone. This
+# keeps a short history of send times per caller and refuses anything past the
+# limit.
+#
+# Known limits, worth stating rather than hiding: the history lives in memory,
+# so it resets when Flask restarts and is not shared if the app is ever run with
+# more than one worker. For an in-store kiosk demo that is enough. A production
+# deployment would use Flask-Limiter backed by Redis.
+SEND_LIMIT = 5              # sends ...
+SEND_WINDOW_SECONDS = 600   # ... per caller per 10 minutes
+
+_send_history = defaultdict(deque)
+_send_history_lock = Lock()
+
+
+def _caller_key():
+    """
+    Identifies the caller for throttling.
+
+    X-Forwarded-For is only consulted when the app is knowingly behind a proxy,
+    because the header is trivially forged and would otherwise let a caller
+    reset their own limit at will.
+    """
+    if current_app.config.get("TRUST_PROXY_HEADERS"):
+        forwarded = request.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
+
+def _send_allowed(caller):
+    now = time.monotonic()
+    with _send_history_lock:
+        history = _send_history[caller]
+        while history and now - history[0] > SEND_WINDOW_SECONDS:
+            history.popleft()
+        if len(history) >= SEND_LIMIT:
+            return False
+        history.append(now)
+        return True
 
 @api.get("/health")
 def health():
@@ -232,38 +286,185 @@ def match_packages():
     }), 200
 
 @api.post("/quote")
-def create_quote():
+def preview_quote():
     """
-    Placeholder endpoint for generating the final trip summary.
+    Builds the quote and returns it, without sending anything.
 
-    How it will eventually be used:
-        The frontend will send the customer profile, Gemini analysis and
-        selected package as JSON.
+    This exists so the quote can be checked without an inbox in the loop. It is
+    the endpoint to use when testing the pricing rules, and the one to call from
+    a browser console when the numbers on the page look wrong.
 
-    Planned request body:
+    How to use:
+        POST /api/quote with the same JSON body as /api/quote/send.
+
+    Example request body:
         {
-            "customer": {
-                "name": "Alex",
-                "travellers": 2,
-                "travel_window": "December 2026",
-                "budget_max_aud": 5000
-            },
-            "analysis": {
-                "detected_destinations": ["Bali"],
-                "travel_style": ["wellness", "adventure"]
-            },
-            "selected_package_id": "package-001"
+            "customer": {"name": "Jordan", "email": "jordan@example.com",
+                         "travellers": 2},
+            "quote": {"departure": "2026-12-01", "valid_days": 14,
+                      "message": "Optional note from the consultant."},
+            "selected_package_id": "product-24766397"
         }
 
-    Planned result:
-        The endpoint will combine the customer information and selected
-        package to generate a final trip recommendation summary.
-
-    Current result:
-        It only confirms that the endpoint exists. Quote generation has
-        not been implemented yet.
+    Success response:
+        {
+            "success": true,
+            "quote": { ... reference, totals, package, dates ... }
+        }
     """
+    try:
+        quote = build_quote(request.get_json(silent=True))
+    except QuoteValidationError as error:
+        return error_response(error.code, error.message, 400)
+    except FileNotFoundError as error:
+        current_app.logger.error("Package database missing: %s", error)
+        return error_response(
+            "DATABASE_MISSING",
+            "The package database could not be opened.",
+            503,
+        )
+
+    return jsonify({"success": True, "quote": quote}), 200
+
+
+@api.post("/quote/send")
+def send_quote():
+    """
+    Builds the quote and emails it to the customer.
+
+    How to use:
+        POST /api/quote/send with a JSON body, from the final quote page.
+
+    Example frontend request:
+        const response = await fetch("/api/quote/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+    Important: the price is NOT read from the request. Only the package id is,
+    and the figures are rebuilt from packages.db, because anything the browser
+    sends is something the customer could have edited first.
+
+    Success response:
+        {
+            "success": true,
+            "quote_reference": "FC-20260827-4F2A",
+            "sent_to": "jordan@example.com",
+            "attached_pdf": true,
+            "total": "A$12,319",
+            "valid_until": "10 Sep 2026"
+        }
+
+    Error responses use the same shape as every other endpoint here:
+        400  INVALID_EMAIL / MISSING_PACKAGE / INVALID_NUMBER ... - fix the input
+        429  TOO_MANY_SENDS                                      - slow down
+        502  EMAIL_FAILED                                        - relay problem
+        503  EMAIL_NOT_CONFIGURED                                - .env problem
+    """
+    # Validate before throttling, so a typo in an email address does not burn
+    # one of the caller's five sends.
+    try:
+        quote = build_quote(request.get_json(silent=True))
+    except QuoteValidationError as error:
+        return error_response(error.code, error.message, 400)
+    except FileNotFoundError as error:
+        current_app.logger.error("Package database missing: %s", error)
+        return error_response(
+            "DATABASE_MISSING",
+            "The package database could not be opened.",
+            503,
+        )
+
+    if not _send_allowed(_caller_key()):
+        return error_response(
+            "TOO_MANY_SENDS",
+            "Too many quotes have been sent from this device. "
+            "Please wait a few minutes and try again.",
+            429,
+        )
+
+    try:
+        result = send_quote_email(quote)
+
+    except EmailConfigurationError as error:
+        # A setup problem the team can fix, so the message is shown as-is. It
+        # never contains the password: see email_service.send_message.
+        current_app.logger.error("Email configuration problem: %s", error)
+        return error_response("EMAIL_NOT_CONFIGURED", str(error), 503)
+
+    except EmailSendError as error:
+        current_app.logger.error("Quote email failed to send: %s", error)
+        return error_response(
+            "EMAIL_FAILED",
+            "The quote could not be sent right now. Please try again in a moment.",
+            502,
+        )
+
+    except Exception:
+        current_app.logger.exception("Unexpected failure while sending the quote")
+        return error_response(
+            "EMAIL_FAILED",
+            "The quote could not be sent right now. Please try again in a moment.",
+            500,
+        )
+
+    # A quote that was emailed but never recorded is invisible to the team, so
+    # the reference and recipient go to the log. The body and the PDF do not.
+    current_app.logger.info(
+        "Quote %s emailed to %s (pdf=%s)",
+        quote["reference"], quote["customer"]["email"], result["attached_pdf"],
+    )
+
     return jsonify({
         "success": True,
-        "message": "Quote generation is not implemented yet.",
+        "quote_reference": quote["reference"],
+        "sent_to": quote["customer"]["email"],
+        "attached_pdf": result["attached_pdf"],
+        "total": quote["money"]["total"],
+        "valid_until": quote["valid_until_display"],
+    }), 200
+
+
+@api.get("/email/status")
+def email_status():
+    """
+    Reports whether email is set up, without sending anything.
+
+    Made for demo mornings: open /api/email/status and you know in one second
+    whether the .env file is loaded, instead of finding out when the send button
+    fails in front of the industry partner.
+
+    Never returns the password, and returns the username only as its domain.
+
+    Success response:
+        {
+            "success": true,
+            "configured": true,
+            "host": "smtp.gmail.com",
+            "port": 587,
+            "account_domain": "gmail.com",
+            "pdf_attachments": true
+        }
+    """
+    try:
+        settings = load_settings()
+    except EmailConfigurationError as error:
+        return jsonify({
+            "success": True,
+            "configured": False,
+            "detail": str(error),
+            "pdf_attachments": PDF_AVAILABLE,
+        }), 200
+
+    username = settings["username"]
+    return jsonify({
+        "success": True,
+        "configured": True,
+        "host": settings["host"],
+        "port": settings["port"],
+        "account_domain": username.split("@")[-1] if "@" in username else None,
+        "from_email": settings["from_email"],
+        "from_mismatch": settings.get("from_mismatch") is not None,
+        "pdf_attachments": PDF_AVAILABLE,
     }), 200

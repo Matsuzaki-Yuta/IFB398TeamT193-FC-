@@ -1,0 +1,52 @@
+{#- The plain-text half of the quote email.
+
+    Not optional. A message with only an HTML part is a long-standing spam
+    signal, and some clients (and most screen readers on older setups) show
+    this version instead. Keep it in step with quote.html whenever either
+    changes. Jinja whitespace control is used throughout so the output does not
+    fill up with blank lines. -#}
+Hi {{ quote.customer.name }},
+
+Here's the trip we put together from the video you shared in store.
+Everything below is held for you until {{ quote.valid_until_display }}.
+{% if quote.agent_message %}
+{{ quote.agent_message }}
+{% endif %}
+YOUR PACKAGE
+{{ quote.package.name }}
+{{ package_meta }}
+{%- if quote.package.summary %}
+
+{{ quote.package.summary }}
+{%- endif %}
+{%- if inclusions %}
+
+WHAT'S INCLUDED
+{% for item in inclusions %}
+  - {{ item }}
+{%- endfor %}
+{%- endif %}
+
+YOUR QUOTE
+  Per person (twin share) .......... {{ quote.money.per_person }}
+  Travellers x {{ quote.totals.travellers }} ................... {{ quote.money.subtotal }}
+  Booking fee ...................... {{ quote.money.booking_fee }}
+  ------------------------------------------------
+  TOTAL ............................ {{ quote.money.total }}
+  Deposit due on acceptance (20%) .. {{ quote.money.deposit }}
+
+TRIP DETAILS
+  Departure ........................ {{ quote.departure_display }}
+  Travellers ....................... {{ quote.totals.travellers }}
+  Quote valid until ................ {{ quote.valid_until_display }}
+{% if has_attachment %}
+A printable copy of this quote is attached as a PDF.
+{% endif %}
+------------------------------------------------------------
+Prices are indicative, per person, twin share, in AUD, and are subject to
+availability at the time of booking. Airfares are excluded unless listed in
+the inclusions above. Reply to this email or visit your nearest store to
+confirm the booking.
+
+Trip Bridge is a Flight Centre in-store concept.
+Quote {{ quote.reference }}, issued {{ quote.issued_on_display }}.
