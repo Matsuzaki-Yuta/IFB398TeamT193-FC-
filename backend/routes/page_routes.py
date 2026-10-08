@@ -22,9 +22,9 @@ PROCESS_STEPS = [
     {"id": "welcome", "number": 1, "label": "Welcome", "url": "/landing"},
     {"id": "customer", "number": 2, "label": "Customer", "url": "/customer"},
     {"id": "inspiration", "number": 3, "label": "Inspiration", "url": "/match"},
-    {"id": "insights", "number": 4, "label": "Insights", "url": "/analysis"},
-    {"id": "build", "number": 5, "label": "Build Package", "url": "/packages"},
-    {"id": "quote", "number": 6, "label": "Final Quote", "url": "/finalquote"},
+    # {"id": "insights", "number": 4, "label": "Insights", "url": "/analysis"},
+    {"id": "build", "number": 4, "label": "Build Package", "url": "/packages"},
+    {"id": "quote", "number": 5, "label": "Final Quote", "url": "/finalquote"},
 ]
 
 

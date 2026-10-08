@@ -1,6 +1,6 @@
 import sqlite3
 
-from backend.models import database
+from . import database
 
 
 def test_database_connection(
