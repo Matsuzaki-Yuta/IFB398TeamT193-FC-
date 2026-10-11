@@ -117,11 +117,8 @@ def match():
 
 @pages.get("/analysis")
 def analysis():
-    """Step 4: what Gemini read from the uploaded clip."""
-    return render_template(
-        "pages/analysis.html",
-        **process_nav_context("insights"),
-    )
+    """Insights step is hidden for now, so send visitors to the packages."""
+    return redirect(url_for("pages.packages"))
 
 
 @pages.get("/packages")
