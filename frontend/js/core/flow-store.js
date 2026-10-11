@@ -90,6 +90,15 @@ var FlowStore = (function () {
     }).catch(function () {});
   }
 
+  // Everything one customer left behind: their details, the chosen package,
+  // the analysis and matches, and the stored video. Called by "Start a new
+  // trip" so the next customer starts with an empty form.
+  function reset() {
+    [CUSTOMER, INSPIRATION, QUOTE, "tripBridgeAnalysis", "tripBridgePackages"]
+      .forEach(clear);
+    return clearVideo();
+  }
+
   return {
     CUSTOMER: CUSTOMER,
     INSPIRATION: INSPIRATION,
@@ -99,6 +108,7 @@ var FlowStore = (function () {
     clear: clear,
     saveVideo: saveVideo,
     loadVideo: loadVideo,
-    clearVideo: clearVideo
+    clearVideo: clearVideo,
+    reset: reset
   };
 })();

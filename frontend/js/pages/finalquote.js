@@ -332,3 +332,15 @@
   // records basedOn, so a later change on the customer step is recognisable
   save();
 })();
+
+/* "Start a new trip" clears the previous customer before going back to the
+   start, so their name, email and quote are not shown to the next person. */
+(function () {
+  var cta = document.getElementById("sentCta");
+  if (!cta) return;
+  cta.addEventListener("click", function (event) {
+    event.preventDefault();
+    var go = function () { window.location.href = cta.getAttribute("href"); };
+    FlowStore.reset().then(go, go);
+  });
+})();
