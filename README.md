@@ -1,164 +1,106 @@
-# Travel Video Matcher
+# Trip Bridge
 
-## Overview
+Trip Bridge is the in-store Travel Planning Studio built by QUT IFB399 Team T193
+with Flight Centre Travel Group (project: Phy-gital Journey).
 
-Travel Video Matcher is a Flask-based web application that uses Google's Gemini AI to analyse travel videos and recommend matching Flight Centre travel packages.
+A consultant enters a young customer's details, the customer uploads a travel
+video, Google Gemini reads the destinations and travel style from it, the app
+matches those against a catalogue of 194 public Flight Centre packages, and the
+customer is emailed a priced quote with a PDF attached.
 
-Users upload a travel video through a web interface. Gemini analyses the video and extracts travel-related information such as destinations, landmarks, activities, and travel style. The extracted information is then matched against a curated travel package database stored in SQLite.
+It is a prototype: it runs on one computer, uses a snapshot of package data
+(prices are indicative) and has no booking or consultant sign-in.
 
-The application demonstrates how AI-powered travel inspiration can be connected directly to relevant travel products, supporting Flight Centre's goal of creating a more seamless digital-to-store customer journey.
+## Journey
 
----
+| Step | URL | Page |
+| ---- | --- | ---- |
+| 1 Welcome | `/landing` | Showreel and Try it now |
+| 2 Customer | `/customer` | Name, email, age range, travellers, dates, budget |
+| 3 Inspiration | `/match` | Upload an MP4 or MOV (up to 50 MB); Gemini analyses it |
+| 4 Build package | `/packages` | Matched packages, best match first |
+| 5 Final quote | `/finalquote` | Server-priced quote, emailed with a PDF |
 
-## Features
+"Start a new trip" clears the previous customer's details. Social media links
+are not connected yet; the page says so if one is pasted.
 
-* Upload travel videos through a web browser
-* AI-powered video analysis using Gemini 2.5 Flash
-* Automatic extraction of:
+## Run it
 
-  * Destinations
-  * Regions
-  * Landmarks
-  * Activities
-  * Travel styles
-* Matching against travel packages stored in SQLite
-* Display package information including:
+Needs Python 3.12 or newer.
 
-  * Price
-  * Destination
-  * Duration
-  * Travel style tags
-  * Matching reasons
-* Simple and responsive web interface
+**Windows:** run `install.bat` once, copy `.env.example` to `.env` and fill it in,
+then run `start.bat`. It opens http://localhost:5000.
 
----
-
-## Technology Stack
-
-### Backend
-
-* Python 3.12
-* Flask
-* SQLite
-
-### Frontend
-
-* HTML
-* CSS
-* JavaScript
-
-### AI
-
-* Google Gemini API
-* Gemini 2.5 Flash
-* Google GenAI SDK
-
----
-
-## Database
-
-The application includes a SQLite database (`packages.db`) containing the travel package catalogue used for matching.
-
-The database is included in the repository so the application can run immediately after cloning without requiring additional setup or seeding.
-
----
-
-## Installation
-
-### 1. Clone Repository
+**macOS:**
 
 ```bash
-git clone <repository-url>
-cd travel-video-matcher
-```
-
-### 2. Create Environment (Optional)
-
-```bash
-conda create -n flightcenter python=3.12
-conda activate flightcenter
-```
-
-### 3. Install Dependencies (If not installed yet)
-
-```bash
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env        # then add GEMINI_API_KEY and SMTP_PASSWORD
+python app.py               # open http://localhost:5000
 ```
 
-### 4. Configure Environment Variables (IMPORTANT!!)
+`packages.db` ships in the project root, so no database setup is needed.
+To rebuild it from `flight_centre_packages.json`, run `python seed_db.py`.
 
-Create a `.env` file in the project root:
+## Configuration (.env)
 
-```text
-GEMINI_API_KEY=YOUR_API_KEY_HERE
-```
+`.env` is gitignored and must never be committed. `.env.example` lists every key.
 
-You can obtain a Gemini API key from Google AI Studio. https://aistudio.google.com/app/api-keys?utm_source=chatgpt.com&project=gen-lang-client-0677881876 
+| Key | Value |
+| --- | ----- |
+| `GEMINI_API_KEY` | Key from Google AI Studio. Needed for video analysis |
+| `SMTP_*`, `MAIL_*` | Gmail account and 16-character App Password for sending quotes |
+| `PACKAGES_DB_PATH` | Optional. Use a different package database |
+| `FLASK_DEBUG` | Optional. `1` turns on debug mode; developer machines only |
 
----
+Check the setup at http://localhost:5000/api/email/status. `"configured": true`
+means email is ready. The password is never returned.
 
-## Running the Application
-
-Start the Flask server:
+## Tests
 
 ```bash
-python app.py
+python -m pytest -q
 ```
 
-Open the application in your browser:
+The tests need no keys and no network. GitHub Actions runs them on every push
+and pull request to `main`.
 
-```text
-http://localhost:5000
+## Project layout
+
+```
+app.py                     creates the Flask app
+backend/routes/            page routes and the /api endpoints
+backend/services/          Gemini, matching, quote pricing, PDF and email
+backend/models/database.py opens packages.db
+frontend/                  templates, CSS, JavaScript, images and showreel media
+tests/                     automated tests
+tools/preview_email.py     renders a sample quote email and PDF without sending
 ```
 
----
+## API
 
-## Application Workflow
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| GET | `/api/health` | Process is up |
+| POST | `/api/analyse` | Send a video to Gemini; returns destinations and styles |
+| POST | `/api/packages/match` | Match an analysis against the catalogue |
+| POST | `/api/quote` | Price a package. Sends nothing |
+| POST | `/api/quote/send` | Price and email the quote with a PDF |
+| GET | `/api/email/status` | Whether email is configured |
 
-1. User uploads a travel video.
-2. Gemini analyses the uploaded video.
-3. Gemini extracts travel information and returns structured JSON.
-4. The application identifies destinations and travel styles.
-5. Matching travel packages are retrieved from the SQLite database.
-6. Matching packages are displayed to the user.
+Errors share one shape: `{ "success": false, "error": { "code": "...", "message": "..." } }`.
 
----
+## Known limits
 
-## Example Output
+* 83 packages have no destination and never match; a Bali video returns nothing.
+  Japan, Vietnam and Europe footage works well for demonstrations.
+* Matching uses destination and travel style only, not budget or dates.
+* Quotes are emailed but not stored.
+* No offline demo mode: analysis needs Gemini to be reachable.
 
-Gemini extracts information such as:
-
-```json
-{
-  "detected_destinations": ["Shanghai", "Zhangjiajie"],
-  "destination_region": "China",
-  "travel_style": ["adventure", "cultural", "luxury"],
-  "activities": ["hiking", "sightseeing"],
-  "landmarks": ["Zhangjiajie National Forest Park"]
-}
-```
-
-The application then recommends relevant travel packages from the package database.
-
----
-
-## Security Notes
-
-API keys are not stored in source code.
-
-Create a local `.env` file and add your Gemini API key:
-
-```text
-GEMINI_API_KEY=YOUR_API_KEY_HERE
-```
-
-The `.env` file is excluded from version control using `.gitignore`.
-
-The same applies to the Gmail App Password used for sending quotes. It lives in
-`.env` beside the Gemini key, is never written to a log line, and is never
-returned by any endpoint, including `/api/email/status`.
-
----
+Full documentation is in the handover pack: Start Here, Technical Documentation,
+User Guide, and Test Plan and Results.
 
 ## Emailing the Final Quote
 
@@ -180,18 +122,18 @@ Send quote  ──POST──▶  /api/quote/send
 ```
 
 Step 3 is the important one. The page adds up the total in JavaScript so the
-agent can watch it change, but that number is never used for the email — the
+agent can watch it change, but that number is never used for the email. The
 request carries only the package id, and every figure is rebuilt from the
 database. Anything the browser sends is something a customer could edit first.
 
 ### Setup
 
-1. Copy `.env.example` to `.env` (it is gitignored — never commit it).
+1. Copy `.env.example` to `.env` (it is gitignored: never commit it).
 2. Turn on 2-Step Verification for the sending Google account.
 3. Create an App Password at https://myaccount.google.com/apppasswords and put
    the 16 characters in `SMTP_PASSWORD`. This is **not** the account password;
    Google rejects the account password over SMTP.
-4. Install the dependencies again — `reportlab` is new:
+4. Install the dependencies again; `reportlab` is needed for the PDF:
 
 ```bash
 pip install -r requirements.txt
@@ -226,7 +168,8 @@ Request body for both POST endpoints:
 
 Error codes the frontend handles: `MISSING_EMAIL`, `INVALID_EMAIL`,
 `INVALID_NUMBER`, `INVALID_DATE`, `MISSING_PACKAGE`, `UNKNOWN_PACKAGE` (400),
-`TOO_MANY_SENDS` (429), `EMAIL_FAILED` (502), `EMAIL_NOT_CONFIGURED` (503).
+`TOO_MANY_SENDS` (429), `EMAIL_FAILED` (502, or 500 if unexpected),
+`EMAIL_NOT_CONFIGURED` (503).
 
 ### Previewing the email without sending anything
 
@@ -239,8 +182,8 @@ plain text and PDF into `preview/`, and opens the HTML in your browser. No
 SMTP settings and no App Password needed. Use this while working on the wording
 or the layout.
 
-It cannot show you how Gmail or Outlook will render it — they apply their own
-rules to email markup — so send one to yourself once the wording is settled.
+It cannot show you how Gmail or Outlook will render it, because they apply their own
+rules to email markup, so send one to yourself once the wording is settled.
 
 ### Testing without emailing anyone
 
@@ -262,7 +205,7 @@ MAIL_FROM_EMAIL=test@example.com
 ```
 
 The message prints to that terminal and nothing leaves the machine. STARTTLS is
-skipped automatically for a server on localhost, and only for localhost — a
+skipped automatically for a server on localhost, and only for localhost. A
 remote host that does not offer STARTTLS is refused rather than having the
 password sent in the clear.
 

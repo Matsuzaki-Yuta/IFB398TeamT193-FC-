@@ -1,10 +1,16 @@
 import os
 
-from flask import Flask
 from dotenv import load_dotenv
 
-from backend.routes.api_routes import api
-from backend.routes.page_routes import pages
+# Load .env before importing the routes. backend/models/database.py reads
+# PACKAGES_DB_PATH when it is first imported, so loading .env any later would
+# silently ignore that setting.
+load_dotenv()
+
+from flask import Flask  # noqa: E402
+
+from backend.routes.api_routes import api  # noqa: E402
+from backend.routes.page_routes import pages  # noqa: E402
 
 # app.py sits at the repo root, but the templates and design assets live
 # under frontend/. These paths let Flask find them.
@@ -14,7 +20,6 @@ FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 def create_app():
     """Create and configure the Flask application."""
-    load_dotenv()
 
     # template_folder points Flask at frontend/templates instead of the
     # default templates/ folder beside this file.
@@ -43,5 +48,8 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    print("Travel Matcher running on http://localhost:5000")
-    app.run(debug=True, port=5000)
+    # Debug mode shows code and allows code execution from the browser when an
+    # error occurs, so it stays off unless FLASK_DEBUG=1 is set in .env.
+    debug = os.environ.get("FLASK_DEBUG") == "1"
+    print("Trip Bridge running on http://localhost:5000")
+    app.run(debug=debug, port=5000)
