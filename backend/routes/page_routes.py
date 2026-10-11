@@ -22,9 +22,9 @@ PROCESS_STEPS = [
     {"id": "welcome", "number": 1, "label": "Welcome", "url": "/landing"},
     {"id": "customer", "number": 2, "label": "Customer", "url": "/customer"},
     {"id": "inspiration", "number": 3, "label": "Inspiration", "url": "/match"},
-    {"id": "insights", "number": 4, "label": "Insights", "url": "/analysis"},
-    {"id": "build", "number": 5, "label": "Build Package", "url": "/packages"},
-    {"id": "quote", "number": 6, "label": "Final Quote", "url": "/finalquote"},
+    # {"id": "insights", "number": 4, "label": "Insights", "url": "/analysis"},
+    {"id": "build", "number": 4, "label": "Build Package", "url": "/packages"},
+    {"id": "quote", "number": 5, "label": "Final Quote", "url": "/finalquote"},
 ]
 
 
@@ -117,11 +117,8 @@ def match():
 
 @pages.get("/analysis")
 def analysis():
-    """Step 4: what Gemini read from the uploaded clip."""
-    return render_template(
-        "pages/analysis.html",
-        **process_nav_context("insights"),
-    )
+    """Insights step is hidden for now, so send visitors to the packages."""
+    return redirect(url_for("pages.packages"))
 
 
 @pages.get("/packages")

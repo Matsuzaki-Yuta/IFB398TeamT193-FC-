@@ -207,7 +207,7 @@ async function submitVideo() {
     footSay("Taking you to Insights…");
 
     // let the ring finish closing before the page changes under it
-    setTimeout(() => { window.location.href = "/analysis"; }, 900);
+    setTimeout(() => { window.location.href = "/packages"; }, 900);
   } catch (err) {
     leaveAnalysing();
     $("submitBtn").disabled = false;

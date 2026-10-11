@@ -134,26 +134,6 @@ def test_analyse_rejects_invalid_file_type(client):
     assert data["success"] is False
     assert data["error"]["code"] == "UNSUPPORTED_FILE_TYPE"
 
-def test_analyse_rejects_invalid_file_type(client):
-    response = client.post(
-        "/api/analyse",
-        data={
-            "video": (
-                io.BytesIO(b"not a video"),
-                "test.txt",
-                "text/plain"
-            )
-        },
-        content_type="multipart/form-data",
-    )
-
-    assert response.status_code == 415
-
-    data = response.get_json()
-
-    assert data["success"] is False
-    assert data["error"]["code"] == "UNSUPPORTED_FILE_TYPE"
-
 
 @patch("backend.routes.api_routes.analyze_video_with_gemini")
 def test_analyse_accepts_mov_file(mock_analyse, client):
