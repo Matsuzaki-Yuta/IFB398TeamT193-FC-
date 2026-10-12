@@ -17,7 +17,7 @@ It is a prototype: it runs on one computer, uses a snapshot of package data
 | ---- | --- | ---- |
 | 1 Welcome | `/landing` | Showreel and Try it now |
 | 2 Customer | `/customer` | Name, email, age range, travellers, dates, budget |
-| 3 Inspiration | `/match` | Upload an MP4 or MOV (up to 50 MB); Gemini analyses it |
+| 3 Inspiration | `/match` | Upload an MP4 or MOV (up to 200 MB); Gemini analyses it |
 | 4 Build package | `/packages` | Matched packages, best match first |
 | 5 Final quote | `/finalquote` | Server-priced quote, emailed with a PDF |
 
