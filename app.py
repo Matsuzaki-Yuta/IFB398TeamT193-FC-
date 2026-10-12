@@ -12,6 +12,9 @@ from flask import Flask  # noqa: E402
 from backend.routes.api_routes import api  # noqa: E402
 from backend.routes.page_routes import pages  # noqa: E402
 
+from flask import jsonify
+from werkzeug.exceptions import RequestEntityTooLarge
+
 # app.py sits at the repo root, but the templates and design assets live
 # under frontend/. These paths let Flask find them.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -35,11 +38,21 @@ def create_app():
         static_url_path="/static",
     )
 
-    app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+    app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024
 
     # pages renders HTML, api returns JSON under /api.
     app.register_blueprint(pages)
     app.register_blueprint(api)
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def handle_file_too_large(error):
+        return jsonify({
+            "success": False,
+            "error": {
+                "code": "FILE_TOO_LARGE",
+                "message": "Your video is too large. Please upload a video under 200 MB."
+            }
+        }), 413
 
     return app
 

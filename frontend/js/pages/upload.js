@@ -1,6 +1,8 @@
 // every backend endpoint answers with {success: true, ...} or
 // {success: false, error: {code, message}}, so unwrapping it once here keeps
 // the calling code readable
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
+
 async function postJson(url, options, fallbackMessage) {
   const res = await fetch(url, options);
   const data = await res.json().catch(() => null);
@@ -150,6 +152,13 @@ async function submitVideo() {
   }
 
   const file = input.files[0];
+  if (file.size > MAX_VIDEO_SIZE) {
+    $("status").textContent =
+        `Your video is ${formatBytes(file.size)}. ` +
+        "The maximum size is 200 MB. Please choose a smaller video.";
+    return;
+  }
+  
   $("status").textContent = "";        // the dial reports progress now; #status is errors only
   $("submitBtn").disabled = true;
 

@@ -165,14 +165,31 @@ def test_analyse_accepts_mov_file(mock_analyse, client):
     assert data["success"] is True
 
 
+# def test_analyse_rejects_oversized_file(client):
+#     large_file = io.BytesIO(b"a" * (51 * 1024 * 1024))
+
+#     response = client.post(
+#         "/api/analyse",
+#         data={
+#             "video": (
+#                 large_file,
+#                 "large_video.mp4",
+#                 "video/mp4"
+#             )
+#         },
+#         content_type="multipart/form-data",
+#     )
+
+#     assert response.status_code == 413
+
 def test_analyse_rejects_oversized_file(client):
-    large_file = io.BytesIO(b"a" * (51 * 1024 * 1024))
+    client.application.config["MAX_CONTENT_LENGTH"] = 1024
 
     response = client.post(
         "/api/analyse",
         data={
             "video": (
-                large_file,
+                io.BytesIO(b"a" * 2048),
                 "large_video.mp4",
                 "video/mp4"
             )
@@ -181,3 +198,7 @@ def test_analyse_rejects_oversized_file(client):
     )
 
     assert response.status_code == 413
+
+    data = response.get_json()
+    assert data["success"] is False
+    assert data["error"]["code"] == "FILE_TOO_LARGE"
