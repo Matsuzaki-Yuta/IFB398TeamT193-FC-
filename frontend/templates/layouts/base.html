@@ -29,7 +29,7 @@
    Only pages that receive that value display the six-step booking bar.
    The landing route deliberately leaves it out so its hero begins directly
    behind the main navbar instead of showing a white strip. #}
-{% if process_steps %}{% include "components/_process_nav.html" %}{% endif %}
+{% if process_steps and request.endpoint != "pages.landing" %}{% include "components/_process_nav.html" %}{% endif %}
 
 {% block content %}{% endblock %}
 
