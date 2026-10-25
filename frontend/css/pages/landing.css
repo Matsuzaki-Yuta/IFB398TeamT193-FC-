@@ -9,10 +9,12 @@
 }
 
 /* ---------------------------------- HERO ----------------------------------- */
+/* Overlay the hero only; booking pages retain the shared sticky navbar. */
+.LandingPage .topbar { position: fixed; top: 0; left: 0; right: 0; }
 .hero {
   position: relative; isolation: isolate; overflow: hidden;
   display: grid; place-items: end center; min-height: 100svh;
-  margin-top: calc(-1 * var(--nav-height)); padding: 180px 22px 120px;
+  margin-top: 0; padding: 180px 22px 120px;
   color: var(--text-on-dark); background: var(--bg-dark);
 }
 .video {

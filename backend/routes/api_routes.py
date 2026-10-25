@@ -3,6 +3,7 @@ from collections import defaultdict, deque
 from threading import Lock
 
 from flask import Blueprint, current_app, jsonify, request
+from google.genai.errors import ServerError
 
 from backend.routes.page_routes import analysis
 from backend.services.email_service import (
@@ -185,7 +186,16 @@ def analyse_video():
         # Handles configuration problems such as a missing Gemini API key.
         return error_response("INVALID_CONFIGURATION", str(error), 503)
     
-    except Exception:
+    except Exception as error:
+        if isinstance(error, ServerError) and error.code == 503:
+            # The SDK has already retried transient failures. Preserve the
+            # temporary-service status and give the consultant a useful message.
+            current_app.logger.warning("Gemini temporarily unavailable after SDK retries")
+            return error_response(
+                "ANALYSIS_UNAVAILABLE",
+                "Gemini is temporarily busy. Please wait a moment and try Analyse & Match again.",
+                503,
+            )
         # Record technical information in the server logs.
         current_app.logger.exception("Video analysis failed")
         # Return a safe and understandable message to the user.
