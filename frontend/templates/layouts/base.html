@@ -3,7 +3,7 @@
    title, styles, content and scripts.
 
    Load order matters and is enforced here so no page has to remember it:
-   liquid-glass.js defines LiquidGlass.apply(), dom-utils.js defines $(),
+   liquid-glass.js defines LiquidGlassEffect.applyGlassEffect(), dom-utils.js defines $(),
    flow-store.js defines FlowStore, and all three run before the page script in
    the scripts block below.
 
@@ -22,11 +22,13 @@
   <link rel="stylesheet" href="/static/css/components/progress-pill.css" />
   {% block styles %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 
 {% include "components/_navbar.html" %}
-{# A page that passes no process_nav_context simply has no bar, rather than an
-   empty strip where the six steps should be. #}
+{# page_routes.py creates process_steps by calling process_nav_context().
+   Only pages that receive that value display the six-step booking bar.
+   The landing route deliberately leaves it out so its hero begins directly
+   behind the main navbar instead of showing a white strip. #}
 {% if process_steps %}{% include "components/_process_nav.html" %}{% endif %}
 
 {% block content %}{% endblock %}
